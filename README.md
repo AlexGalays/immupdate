@@ -23,7 +23,6 @@ These libraries are often quite heavy, and while they allow efficient updates an
 - Persisting to localStorage is often done via JSON.stringify() for convenience.
 - Popular third party libraries work with plain Objects or Arrays; This might change in a few years when JS has higher level abstractions like iterators.
 
-
 # Examples
 
 ```javascript
@@ -47,6 +46,10 @@ These libraries are often quite heavy, and while they allow efficient updates an
   assert(updated != person);
   assert(updated.friends == person.friends);
   assert(updated.prefs != person.prefs);
+
+  // Or the simple string path notation
+
+  var updated2 = update(person, 'prefs.csvSep', ';');
 
 ```
 
@@ -86,4 +89,10 @@ These libraries are often quite heavy, and while they allow efficient updates an
   assert(updated[0].friends != people[0].friends);
   assert(updated[1] == people[1]);
 
+```
+
+# Running the tests
+```
+npm install mocha
+mocha --ui tdd
 ```

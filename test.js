@@ -1,7 +1,7 @@
-var assert    = require('better-assert'),
-    deepEqual = require('deep-equal'),
-    _         = require('ramda'),
-    update    = require('./immupdate');
+var assert          = require('better-assert'),
+    assertDeepEqual = require('deep-equal'),
+    _               = require('ramda'),
+    update          = require('./immupdate');
 
 
 suite('', function() {
@@ -46,6 +46,10 @@ suite('', function() {
       l: 'lettuce'                    // add primitive,
     });
 
+    // Shortcut for single path updates
+    var updated2 = update(obj, 'k.name', 'kiwi');
+    var updated3 = update(updated2, 'c.name', { second: 'sliced' });
+
     assert(updated != obj);
     deepEqual(obj, objBefore);
     deepEqual(updated, {
@@ -56,9 +60,24 @@ suite('', function() {
       k: { name: 'kiwi' },
       l: 'lettuce'
     });
+    deepEqual(updated2, {
+      a: 'apples',
+      o: { name: 'oranges' },
+      b: { name: 'bananas' },
+      c: { name: { first: 'coconut' } },
+      k: { name: 'kiwi' }
+    });
+    deepEqual(updated3, {
+      a: 'apples',
+      o: { name: 'oranges' },
+      b: { name: 'bananas' },
+      c: { name: { first: 'coconut', second: 'sliced' } },
+      k: { name: 'kiwi' }
+    });
 
     // The reference was kept because we didn't mutate that element
     assert(obj.b == updated.b);
+    assert(obj.b == updated2.b);
     // The name of 'o' was mutated, therefore 'o' is considered different.
     assert(obj.o != updated.o);
 
@@ -116,9 +135,9 @@ suite('', function() {
     var updated = update(people, {
       0: { friends: function(f) {
         var withoutAlex = _.reject(_.eq('alex'), f);
-        return _.append('bob', f)
+        return _.append('bob', withoutAlex);
       }},
-      2: { friends: function(f) { f.concat('bob') } }
+      2: { friends: function(f) { return f.concat('bob') } }
     });
 
     assert(updated != people);
@@ -145,7 +164,18 @@ suite('', function() {
 });
 
 
+function deepEqual(a, b) {
+  var result = assertDeepEqual(a, b);
+  if (!result) {
+    var errorMsg = 'deepEqual assertion failed: \n' +
+    JSON.stringify(a) + '\n' +
+    'is not equal to: \n' +
+    JSON.stringify(b);
 
+    throw new Error(errorMsg);
+  }
+  return result;
+}
 
 function sleepy(str) {
   return (str + 'zzz');
