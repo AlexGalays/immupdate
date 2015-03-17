@@ -164,6 +164,20 @@ suite('', function() {
 });
 
 
+test('Updating an empty object should end up being a deep copy of the spec', function() {
+  var host = {};
+  var spec = {
+    'uno': 33,
+    'dos': [1, 2, 3]
+  };
+
+  var updated = update(host, spec);
+
+  deepEqual(updated, spec);
+  assert(Array.isArray(updated.dos));
+});
+
+
 function deepEqual(a, b) {
   var result = assertDeepEqual(a, b);
   if (!result) {

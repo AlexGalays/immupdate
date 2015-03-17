@@ -9,7 +9,7 @@ immupdate is a snippet inspired by [React's immutable add-on](http://facebook.gi
 It is used to update a JS tree while guaranteeing that any sub-tree that changed (and only those) now have a new reference. 
 This is very useful when using virtual-DOM based libraries such as [React](http://facebook.github.io/react/) or [mithril](http://lhorie.github.io/mithril/) where simple equality checks is the fastest way to determine whether a sub-tree should be re-rendered.
 
-immupdate can be used together with a proper functional library like [Ramda](http://ramda.github.io/ramdocs/docs/) for terse updates.
+immupdate can be used together with a proper functional library for terse updates.
 
 
 # Why Object/Array instead of immutable data structures
@@ -19,9 +19,12 @@ These libraries are often quite heavy, and while they allow efficient updates an
 
 - The server sends JSON data structures: they must first be converted into deeply nested data structures.
 - The client sends back JSON to the server: the deeply nested data structures must be converted back to JSON.
-- Rendering libraries (react, mithril, d3, knockout, etc) expect native Arrays to render a list of DOM nodes. This means our shiny data structure must be converted back to an Array **every time** we want to re-render.
+- Rendering libraries (react, mithril, virtual-dom, d3, knockout, etc) expect native Arrays to render a list of DOM nodes. This means our shiny data structure must be converted back to an Array **every time** a re-render is necessary.
 - Persisting to localStorage is often done via JSON.stringify() for convenience.
 - Popular third party libraries work with plain Objects or Arrays; This might change in a few years when JS has higher level abstractions like iterators.
+
+# Why not just deepClone everything defensively
+It's dog slow.
 
 # Examples
 
@@ -93,6 +96,5 @@ These libraries are often quite heavy, and while they allow efficient updates an
 
 # Running the tests
 ```
-npm install mocha
 mocha --ui tdd
 ```

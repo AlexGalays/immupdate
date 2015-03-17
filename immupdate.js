@@ -14,8 +14,10 @@ function update(host, spec) {
   }
 
   // If any of the branches of an object changed, then than object changed too: clone it.
-  var copy = (host == null) ? {} :
-    Array.isArray(host) ? host.slice() : clone(host);
+  // The type of the copy is inferred.
+  var copy = host
+    ? Array.isArray(host) ? host.slice() : clone(host)
+    : Array.isArray(spec) ? [] : {};
 
   for (var key in spec) {
     var specValue = spec[key];
