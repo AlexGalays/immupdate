@@ -9,7 +9,9 @@ immupdate is a snippet inspired by [React's immutable add-on](http://facebook.gi
 It is used to update a JS tree while guaranteeing that any sub-tree that changed (and only those) now have a new reference. 
 This is very useful when using virtual-DOM based libraries such as [React](http://facebook.github.io/react/) or [mithril](http://lhorie.github.io/mithril/) where simple equality checks is the fastest way to determine whether a sub-tree should be re-rendered.
 
-immupdate can be used together with a proper functional library for terse updates.
+# Why not just recursively deep clone defensively
+It's very wasteful and can often be too slow for nested structures.
+immupdate only updates the paths that changed and only at update time, not defensively everytime an object is handed out in fear it might be mutated in place.
 
 
 # Why Object/Array instead of immutable data structures
@@ -23,9 +25,6 @@ These libraries are often quite heavy, and while they allow efficient updates an
 - Persisting to localStorage is often done via JSON.stringify() for convenience.
 - Popular third party libraries work with plain Objects or Arrays; This might change in a few years when JS has higher level abstractions like iterators.
 
-# Why not just deepClone everything defensively
-It's dog slow.
-
 # Examples
 
 ```javascript
@@ -35,7 +34,10 @@ It's dog slow.
     id: 33,
     prefs: {
       csvSep: ',',
-      timezone: 2
+      timezone: 2,
+      otherData: {
+        nestedData: {}
+      }
     },
     friends: [1, 2, 3]
   };
@@ -44,17 +46,12 @@ It's dog slow.
     prefs: { csvSep: ';' }
   });
 
-  // Assertions
-
-  assert(updated != person);
-  assert(updated.friends == person.friends);
-  assert(updated.prefs != person.prefs);
-
-  // Or the simple string path notation
-
+  // Or the simple string path notation, useful for single updates
   var updated2 = update(person, 'prefs.csvSep', ';');
-
 ```
+`person` was only updated where necessary. Below in green are the paths that were updated.  
+![update](http://i171.photobucket.com/albums/u320/boubiyeah/Screen%20Shot%202015-04-19%20at%2000.15.12_zps4gvttcxd.png)
+
 
 ```javascript
   var update = require('./update');
@@ -67,18 +64,6 @@ It's dog slow.
   var updated = update(people, {
     0: { friends: f => f.concat(10) }
   });
-
-  // Or, for dynamic indexes
-
-  function objAt(prop, value) {
-    var o = {};
-    o[prop] = value;
-    return o;
-  }
-
-  var updated = update(people, {
-    objAt(index, { friends: f => f.concat(10) })
-  }
 
   // Assertions
 
