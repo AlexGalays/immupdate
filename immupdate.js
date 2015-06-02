@@ -45,7 +45,7 @@ function clone(obj) {
   return result;
 }
 
-function isObject(x) { return x && typeof x == 'object' }
+function isObject(x) { return x && typeof x == 'object' && !Array.isArray(x) }
 
 
 module.exports = update;
