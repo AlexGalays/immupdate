@@ -22,8 +22,11 @@ function update(host, spec) {
   for (var key in spec) {
     var specValue = spec[key];
 
+    if (specValue == DELETE) {
+      Array.isArray(copy) ? copy.splice(key, 1) : delete copy[key];
+    }
     // The spec continues deeper
-    if (isObject(specValue)) {
+    else if (isObject(specValue)) {
       copy[key] = update(copy[key], specValue);
     }
     // Leaf update
@@ -47,5 +50,7 @@ function clone(obj) {
 
 function isObject(x) { return x && typeof x == 'object' && !Array.isArray(x) }
 
+
+var DELETE = update.DELETE = {};
 
 module.exports = update;

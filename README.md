@@ -79,6 +79,36 @@ These libraries are often quite heavy, and while they allow efficient updates an
 
 ```
 
+# Update modes
+
+By default, as this is by far the most common operation, `update` will merge (and replace if applicable) all the keys from the passed object unto the target object, key by key.   
+There are two other update modes:  
+
+## Full replace
+
+By providing a function instead of a value, the function result will be used to fully replace the target:  
+
+```javascript
+  var host = [ {}, {} ];
+  var replacement = { a: 1 };
+  var updated = update(host, '1', () => replacement);
+
+  assert(updated[1] == replacement);
+```
+
+## Delete
+
+By using a special marker, an object key can actually be deleted:  
+
+```javascript
+  var host = { a: 33, b: 44 };
+  var spec = { a: update.DELETE };
+  var updated = update(host, spec);
+
+  deepEqual(updated, { b: 44 });
+```
+
+
 # Running the tests
 ```
 mocha --ui tdd

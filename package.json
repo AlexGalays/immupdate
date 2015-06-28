@@ -1,6 +1,6 @@
 {
   "name": "immupdate",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Immutable update for Object/Array",
   "main": "immupdate.js",
   "dependencies": {

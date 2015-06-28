@@ -174,7 +174,44 @@ test('Updating an empty object should end up being a deep copy of the spec', fun
   var updated = update(host, spec);
 
   deepEqual(updated, spec);
+  assert(updated != spec && updated && host);
   assert(Array.isArray(updated.dos));
+});
+
+
+test('Pushing to an Array', function() {
+  var host = { array: [ 10, 20, 30 ] };
+
+  var updated = update(host, 'array.' + host.array.length, 40);
+  deepEqual(updated, { array: [ 10, 20, 30, 40 ] });
+
+  updated = update(host, 'array', function(array) { return array.concat(40) });
+  deepEqual(updated, { array: [ 10, 20, 30, 40 ] });
+});
+
+
+test('Replacing an object entirely, by reference', function() {
+  var host = [ {}, {} ];
+  var replacement = {};
+  var updated = update(host, '1', function() { return replacement });
+
+  assert(updated[1] == replacement);
+});
+
+
+test('Deleting an object key', function() {
+  var host = { a: 33, b: 44 };
+  var spec = { a: update.DELETE };
+  var updated = update(host, spec);
+  deepEqual(updated, { b: 44 });
+});
+
+
+test('Deleting an array value', function() {
+  var host = [ 10, 20, 30 ];
+  var spec = { 1: update.DELETE };
+  var updated = update(host, spec);
+  deepEqual(updated, [ 10, 30 ]);
 });
 
 
