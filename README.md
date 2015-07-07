@@ -2,12 +2,18 @@
 Immutable updates for JS collections: `Object` and `Array`.
 
 
+* [Update a property](#update-property)
+* [Fully replace a property by reference](#replace-property)
+* [Delete a property](#delete-property)
+* [Update an object in an Array](#update-array-object)
+
+
 # Well, what is it?
 
-immupdate is a snippet inspired by [React's immutable add-on](http://facebook.github.io/react/docs/update.html), but much simpler and without dependencies.
+immupdate is inspired by [React's immutable add-on](http://facebook.github.io/react/docs/update.html), but much simpler, tiny and without dependencies.
 
 It is used to update a JS tree while guaranteeing that any sub-tree that changed (and only those) now have a new reference. 
-This is very useful when using virtual-DOM based libraries such as [React](http://facebook.github.io/react/) or [mithril](http://lhorie.github.io/mithril/) where simple equality checks is the fastest way to determine whether a sub-tree should be re-rendered.
+This is very useful when using virtual-DOM based libraries where simple equality checks is the fastest way to determine whether a sub-tree should be re-rendered.
 
 # Why not just recursively deep clone defensively
 It's very wasteful and can often be too slow for nested structures.
@@ -23,9 +29,14 @@ These libraries are often quite heavy, and while they allow efficient updates an
 - The client sends back JSON to the server: the deeply nested data structures must be converted back to JSON.
 - Rendering libraries (react, mithril, virtual-dom, d3, knockout, etc) expect native Arrays to render a list of DOM nodes. This means our shiny data structure must be converted back to an Array **every time** a re-render is necessary.
 - Persisting to localStorage is often done via JSON.stringify() for convenience.
-- Popular third party libraries work with plain Objects or Arrays; This might change in a few years when JS has higher level abstractions like iterators.
+- Popular third party libraries work with plain Objects or Arrays; This might change in a few years when JS has higher level abstractions like iterators available in mainstream browsers and libraries make use of it instead of having a hard dependency on Arrays (or with new languages directly compiling to byte code).
 
 # Examples
+
+<a name="update-property"></a>
+## Updating a property
+
+By default, as this is by far the most common operation, `update` will merge (and replace if applicable) all the keys from the passed object unto the target object, key by key.  
 
 ```javascript
   var update = require('./update');
@@ -79,24 +90,22 @@ These libraries are often quite heavy, and while they allow efficient updates an
 
 ```
 
-# Update modes
+<a name="replace-property"></a>
+## Fully replace a property by reference
 
-By default, as this is by far the most common operation, `update` will merge (and replace if applicable) all the keys from the passed object unto the target object, key by key.   
-There are two other update modes:  
-
-## Full replace
-
-By providing a function instead of a value, the function result will be used to fully replace the target:  
+By providing a function instead of a value, the function result will be used as-is to fully replace the target.  
+Be careful as it is now your responsability for providing a sane, non-mutated-in-place reference.  
 
 ```javascript
   var host = [ {}, {} ];
   var replacement = { a: 1 };
-  var updated = update(host, '1', () => replacement);
+  var updated = update(host, '1', current => replacement);
 
   assert(updated[1] == replacement);
 ```
 
-## Delete
+<a name="delete-property"></a>
+## Delete a property
 
 By using a special marker, an object key can actually be deleted:  
 
@@ -107,6 +116,22 @@ By using a special marker, an object key can actually be deleted:
 
   deepEqual(updated, { b: 44 });
 ```
+
+<a name="update-array-object"></a>
+## Update an object in an Array
+
+```javascript
+  var host = { nestedArray: [ { a: 11 }, { b: 22 } ] };
+  var index = 1; // This is usually computed dynamically
+  var spec = { nestedArray: { [index]: { c: 33 } } }; // A nice ES6 feature!
+  var updated = update(host, spec);
+
+  // Or
+  updated = update(host, `nestedArray.${index}`, {c: 33});
+
+  deepEqual(updated, { nestedArray: [ { a: 11 }, { b: 22, c: 33 } ] });
+```
+
 
 
 # Running the tests
