@@ -94,7 +94,8 @@ By default, as this is by far the most common operation, `update` will merge (an
 ## Fully replace a property by reference
 
 By providing a function instead of a value, the function result will be used as-is to fully replace the target.  
-Be careful as it is now your responsability for providing a sane, non-mutated-in-place reference.  
+The current value is passed as the only argument to the function.  
+Be careful as it is now your responsability for providing a sane, non-mutated-in-place value.  
 
 ```javascript
   var host = [ {}, {} ];

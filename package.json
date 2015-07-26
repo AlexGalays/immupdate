@@ -3,13 +3,12 @@
   "version": "0.1.2",
   "description": "Immutable update for Object/Array",
   "main": "immupdate.js",
-  "dependencies": {
+
+  "devDependencies": {
+    "mocha": "2.1.0",
     "better-assert": "1.0.1",
     "deep-equal": "1.0.0",
     "ramda": "0.6.0"
-  },
-  "devDependencies": {
-    "mocha": "2.1.0"
   },
   "repository": {
     "type": "git",
