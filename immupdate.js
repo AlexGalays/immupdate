@@ -1,13 +1,13 @@
 
 function update(host, spec) {
   // Single path string update like: update(obj, 'path1.path2.name', 'John');
-  if (arguments.length == 3) {
+  if (arguments.length === 3) {
     var value = arguments[2];
     var paths = spec.split('.');
     var specObj = {};
     var currentObj = specObj;
     paths.forEach(function(path, index) {
-      if (index == paths.length - 1) currentObj[path] = value;
+      if (index === paths.length - 1) currentObj[path] = value;
       else currentObj[path] = currentObj = {};
     });
     spec = specObj;
@@ -22,7 +22,7 @@ function update(host, spec) {
   for (var key in spec) {
     var specValue = spec[key];
 
-    if (specValue == DELETE) {
+    if (specValue === DELETE) {
       Array.isArray(copy) ? copy.splice(key, 1) : delete copy[key];
     }
     // The spec continues deeper
@@ -31,7 +31,7 @@ function update(host, spec) {
     }
     // Leaf update
     else {
-      var newValue = (typeof specValue == 'function')
+      var newValue = (typeof specValue === 'function')
         ? specValue(copy[key])
         : specValue;
 
@@ -48,7 +48,7 @@ function clone(obj) {
   return result;
 }
 
-function isObject(x) { return x && typeof x == 'object' && !Array.isArray(x) }
+function isObject(x) { return x && typeof x === 'object' && !Array.isArray(x) }
 
 
 var DELETE = update.DELETE = {};
