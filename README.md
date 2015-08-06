@@ -39,7 +39,7 @@ These libraries are often quite heavy, and while they allow efficient updates an
 By default, as this is by far the most common operation, `update` will merge (and replace if applicable) all the keys from the passed object unto the target object, key by key.  
 
 ```javascript
-  var update = require('./update');
+  var update = require('immupdate');
 
   var person = {
     id: 33,
@@ -65,7 +65,7 @@ By default, as this is by far the most common operation, `update` will merge (an
 
 
 ```javascript
-  var update = require('./update');
+  var update = require('immupdate');
 
   var people = [
     {id: 1, name: 'tom', friends: [1, 2, 8]},
