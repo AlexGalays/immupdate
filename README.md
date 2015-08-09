@@ -1,3 +1,4 @@
+![immupdate_logo](http://i171.photobucket.com/albums/u320/boubiyeah/immupdate_logo_zpso5d7ao18.png)
 
 Immutable updates for JS collections: `Object` and `Array`.
 
