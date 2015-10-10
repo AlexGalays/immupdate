@@ -105,6 +105,16 @@ Be careful as it is now your responsability for providing a sane, non-mutated-in
 
   assert(updated[1] == replacement);
 ```
+For this operation to be more self-documented and because ES6's `=>` can sometimes be a pain  
+(e.g if you want to replace the value with an empty object), a function is also provided : 
+```javascript
+  import update, { replace } from 'immupdate';
+
+  var host = [ {}, {} ];
+  var replacement = { a: 1 };
+  var updated = update(host, '1', replace(replacement));
+
+```
 
 <a name="delete-property"></a>
 ## Delete a property
@@ -132,11 +142,4 @@ By using a special marker, an object key can actually be deleted:
   updated = update(host, `nestedArray.${index}`, {c: 33});
 
   deepEqual(updated, { nestedArray: [ { a: 11 }, { b: 22, c: 33 } ] });
-```
-
-
-
-# Running the tests
-```
-mocha --ui tdd
 ```

@@ -193,7 +193,10 @@ suite('immupdate', function() {
     var replacement = {};
     var updated = update(host, '1', function() { return replacement });
 
-    assert(updated[1] == replacement);
+    // Alternate notation
+    var updated2 = update(host, '1', update.replace(replacement));
+
+    assert(updated[1] == replacement && updated[1] == updated2[1]);
   });
 
 

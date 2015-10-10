@@ -53,4 +53,9 @@ function isObject(x) { return x && typeof x === 'object' && !Array.isArray(x) }
 
 var DELETE = update.DELETE = {};
 
+update.replace = function(value) {
+  return function() { return value };
+};
+
+
 module.exports = update;
