@@ -23,14 +23,18 @@ immupdate only updates the paths that changed and only at update time, not defen
 
 # Why Object/Array instead of immutable data structures
 
-Apart from very niche uses, JS is not ready for immutable (persistent) data structures like [mori](http://swannodette.github.io/mori/) or [immutable-js](https://github.com/facebook/immutable-js).
-These libraries are often quite heavy, and while they allow efficient updates and memory usage, these advantages are meaningless when various JS<->lib transformations must occur frequently:  
+Pros:  
 
-- The server sends JSON data structures: they must first be converted into deeply nested data structures.
+- This lib is tiny and only manipulate JS' native data structures. Immutable data structures with a rich API will usually come packaged as a fairly big library.
+- No need for encoding/decoding when the server sends JSON data structures. With immutable data structures, they must first be converted into deeply nested data structures.
 - The client sends back JSON to the server: the deeply nested data structures must be converted back to JSON.
-- Rendering libraries (react, mithril, virtual-dom, d3, knockout, etc) expect native Arrays to render a list of DOM nodes. This means our shiny data structure must be converted back to an Array **every time** a re-render is necessary.
-- Persisting to localStorage is often done via JSON.stringify() for convenience.
+- Many rendering libraries (mithril, virtual-dom, d3, knockout, etc) expect native Arrays to render a list of DOM nodes. This means our shiny data structure must be converted back to an Array **every time** a re-render is necessary.
+- Persisting to localStorage is often done via JSON.stringify() for convenience, this is trivial when we are this close to the metal.
 - Popular third party libraries work with plain Objects or Arrays; This might change in a few years when JS has higher level abstractions like iterators available in mainstream browsers and libraries make use of it instead of having a hard dependency on Arrays (or with new languages directly compiling to byte code).
+
+Cons:  
+
+- Immutability can NOT be enforced as the underlying structures are still mutable. Coding conventions and discipline is more important than with well designed immutable data strucrures.
 
 # Examples
 
