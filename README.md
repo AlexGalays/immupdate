@@ -1,6 +1,6 @@
 ![immupdate_logo](http://i171.photobucket.com/albums/u320/boubiyeah/immupdate_logo_zpso5d7ao18.png)
 
-Immutable updates for JS collections: `Object` and `Array`.
+Terse immutable updates for JS data structures: `Object` and `Array`.
 
 
 * [Update a property](#update-property)
@@ -13,7 +13,7 @@ Immutable updates for JS collections: `Object` and `Array`.
 
 immupdate is inspired by [React's immutable add-on](http://facebook.github.io/react/docs/update.html), but much simpler, tiny and without dependencies.
 
-It is used to update a JS tree while guaranteeing that any sub-tree that changed (and only those) now have a new reference. 
+It is used to update a JS tree while guaranteeing that any sub-tree that changed (and only those) now have a new reference.
 This is very useful when using virtual-DOM based libraries where simple equality checks is the fastest way to determine whether a sub-tree should be re-rendered.
 
 # Why not just recursively deep clone defensively
@@ -34,7 +34,8 @@ Pros:
 
 Cons:  
 
-- Immutability can NOT be enforced as the underlying structures are still mutable. Coding conventions and discipline is more important than with well designed immutable data strucrures.
+- Immutability can NOT be enforced as the underlying structures are still mutable. Coding conventions and discipline is more important than with well designed immutable data structures.
+- Due to the highly dynamic nature of the API, it is not possible to provide a proper typesafe interface (typescript, flow).  Type safety on writes are effectively exchanged for terse and performant update code. Note however that Immutable-js also doesn't provide type safety for many operations (Records, updateIn, mergeIn, etc).
 
 # Examples
 
@@ -44,54 +45,54 @@ Cons:
 By default, as this is by far the most common operation, `update` will merge (and replace if applicable) all the keys from the passed object unto the target object, key by key.  
 
 ```javascript
-  var update = require('immupdate');
+import update, { updateKey } from 'immupdate';
 
-  var person = {
-    id: 33,
-    prefs: {
-      csvSep: ',',
-      timezone: 2,
-      otherData: {
-        nestedData: {}
-      }
-    },
-    friends: [1, 2, 3]
-  };
+const person = {
+  id: 33,
+  prefs: {
+    csvSep: ',',
+    timezone: 2,
+    otherData: {
+      nestedData: {}
+    }
+  },
+  friends: [1, 2, 3]
+};
 
-  var updated = update(person, {
-    prefs: { csvSep: ';' }
-  });
+const updated = update(person, {
+  prefs: { csvSep: ';' }
+});
 
-  // Or the simple string path notation, useful for single updates
-  var updated2 = update(person, 'prefs.csvSep', ';');
+// Or the simple string path notation, useful for single updates
+const updated2 = updateKey(person, 'prefs.csvSep', ';');
 ```
 `person` was only updated where necessary. Below in green are the paths that were updated.  
 ![update](http://i171.photobucket.com/albums/u320/boubiyeah/Screen%20Shot%202015-04-19%20at%2000.15.12_zps4gvttcxd.png)
 
 
 ```javascript
-  var update = require('immupdate');
+import update from 'immupdate';
 
-  var people = [
-    {id: 1, name: 'tom', friends: [1, 2, 8]},
-    {id: 2, name: 'john', friends: [2, 7]}
-  ];
+const people = [
+  {id: 1, name: 'tom', friends: [1, 2, 8]},
+  {id: 2, name: 'john', friends: [2, 7]}
+];
 
-  var updated = update(people, {
-    0: { friends: f => f.concat(10) }
-  });
+const updated = update(people, {
+  0: { friends: f => f.concat(10) }
+});
 
-  // Assertions
+// Assertions
 
-  deepEqual(updated, [
-    {id: 1, name: 'tom', friends: [1, 2, 8, 10]},
-    {id: 2, name: 'john', friends: [2, 7]}
-  ]);
+deepEqual(updated, [
+  {id: 1, name: 'tom', friends: [1, 2, 8, 10]},
+  {id: 2, name: 'john', friends: [2, 7]}
+]);
 
-  assert(updated != people);
-  assert(updated[0] != people[0]);
-  assert(updated[0].friends != people[0].friends);
-  assert(updated[1] == people[1]);
+assert(updated !== people);
+assert(updated[0] !== people[0]);
+assert(updated[0].friends !== people[0].friends);
+assert(updated[1] === people[1]);
 
 ```
 
@@ -100,24 +101,24 @@ By default, as this is by far the most common operation, `update` will merge (an
 
 By providing a function instead of a value, the function result will be used as-is to fully replace the target.  
 The current value is passed as the only argument to the function.  
-Be careful as it is now your responsability for providing a sane, non-mutated-in-place value.  
+Be careful as it is now your responsability to provide a proper, non-mutated-in-place value.  
 
 ```javascript
-  var host = [ {}, {} ];
-  var replacement = { a: 1 };
-  var updated = update(host, '1', current => replacement);
+import { updateKey } from 'immupdate';
 
-  assert(updated[1] == replacement);
+const host = [ {}, {} ];
+const replacement = { a: 1 };
+const updated = updateKey(host, '1', current => replacement);
+
+assert(updated[1] === replacement);
 ```
-For this operation to be more self-documented and because ES6's `=>` can sometimes be a pain  
-(e.g if you want to replace the value with an empty object), a function is also provided : 
+For this operation to be more self-documented, a function is also provided:
 ```javascript
-  import update, { replace } from 'immupdate';
+import { updateKey, replace } from 'immupdate';
 
-  var host = [ {}, {} ];
-  var replacement = { a: 1 };
-  var updated = update(host, '1', replace(replacement));
-
+const host = [ {}, {} ];
+const replacement = { a: 1 };
+const updated = updateKey(host, '1', replace(replacement));
 ```
 
 <a name="delete-property"></a>
@@ -126,24 +127,28 @@ For this operation to be more self-documented and because ES6's `=>` can sometim
 By using a special marker, an object key can actually be deleted:  
 
 ```javascript
-  var host = { a: 33, b: 44 };
-  var spec = { a: update.DELETE };
-  var updated = update(host, spec);
+import update, { DELETE } from 'immupdate';
 
-  deepEqual(updated, { b: 44 });
+const host = { a: 33, b: 44 };
+const spec = { a: update.DELETE };
+const updated = update(host, spec);
+
+deepEqual(updated, { b: 44 });
 ```
 
 <a name="update-array-object"></a>
 ## Update an object in an Array
 
 ```javascript
-  var host = { nestedArray: [ { a: 11 }, { b: 22 } ] };
-  var index = 1; // This is usually computed dynamically
-  var spec = { nestedArray: { [index]: { c: 33 } } }; // A nice ES6 feature!
-  var updated = update(host, spec);
+import update, { updateKey } from 'immupdate';
 
-  // Or
-  updated = update(host, `nestedArray.${index}`, {c: 33});
+const host = { nestedArray: [ { a: 11 }, { b: 22 } ] };
+const index = 1; // This is usually computed dynamically
+const spec = { nestedArray: { [index]: { c: 33 } } };
+const updated = update(host, spec);
 
-  deepEqual(updated, { nestedArray: [ { a: 11 }, { b: 22, c: 33 } ] });
+// Or
+const updated2 = updateKey(host, `nestedArray.${index}`, { c: 33 });
+
+deepEqual(updated, { nestedArray: [ { a: 11 }, { b: 22, c: 33 } ] });
 ```

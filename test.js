@@ -1,7 +1,10 @@
 var assert          = require('better-assert'),
     assertDeepEqual = require('deep-equal'),
     _               = require('ramda'),
-    update          = require('./immupdate');
+    update          = require('./lib/immupdate').default,
+    updateKey       = require('./lib/immupdate').updateKey,
+    replace         = require('./lib/immupdate').replace,
+    DELETE          = require('./lib/immupdate').DELETE;
 
 
 suite('immupdate', function() {
@@ -47,8 +50,8 @@ suite('immupdate', function() {
     });
 
     // Shortcut for single path updates
-    var updated2 = update(obj, 'k.name', 'kiwi');
-    var updated3 = update(updated2, 'c.name', { second: 'sliced' });
+    var updated2 = updateKey(obj, 'k.name', 'kiwi');
+    var updated3 = updateKey(updated2, 'c.name', { second: 'sliced' });
 
     assert(updated != obj);
     deepEqual(obj, objBefore);
@@ -106,10 +109,10 @@ suite('immupdate', function() {
     var arr = [1, [2, 3, 4], [5, [6, 7]]];
         arrBefore = deepCopy(arr);
 
-    var updated = update(arr, { 
+    var updated = update(arr, {
       2: {
         0: 55,
-        1: { 0: 66 } 
+        1: { 0: 66 }
       }
     });
 
@@ -150,7 +153,7 @@ suite('immupdate', function() {
     assert(people[1] == updated[1]);
 
     assert(people[2] != updated[2]);
-    assert(people[2].friends != updated[2].friends);    
+    assert(people[2].friends != updated[2].friends);
 
 
     deepEqual(updated, [
@@ -180,10 +183,10 @@ suite('immupdate', function() {
   test('Pushing to an Array', function() {
     var host = { array: [ 10, 20, 30 ] };
 
-    var updated = update(host, 'array.' + host.array.length, 40);
+    var updated = updateKey(host, 'array.' + host.array.length, 40);
     deepEqual(updated, { array: [ 10, 20, 30, 40 ] });
 
-    updated = update(host, 'array', function(array) { return array.concat(40) });
+    updated = updateKey(host, 'array', function(array) { return array.concat(40) });
     deepEqual(updated, { array: [ 10, 20, 30, 40 ] });
   });
 
@@ -191,10 +194,10 @@ suite('immupdate', function() {
   test('Replacing an object entirely, by reference', function() {
     var host = [ {}, {} ];
     var replacement = {};
-    var updated = update(host, '1', function() { return replacement });
+    var updated = updateKey(host, '1', function() { return replacement });
 
     // Alternate notation
-    var updated2 = update(host, '1', update.replace(replacement));
+    var updated2 = updateKey(host, '1', replace(replacement));
 
     assert(updated[1] == replacement && updated[1] == updated2[1]);
   });
@@ -202,7 +205,7 @@ suite('immupdate', function() {
 
   test('Deleting an object key', function() {
     var host = { a: 33, b: 44 };
-    var spec = { a: update.DELETE };
+    var spec = { a: DELETE };
     var updated = update(host, spec);
     deepEqual(updated, { b: 44 });
   });
@@ -210,7 +213,7 @@ suite('immupdate', function() {
 
   test('Deleting an array value', function() {
     var host = [ 10, 20, 30 ];
-    var spec = { 1: update.DELETE };
+    var spec = { 1: DELETE };
     var updated = update(host, spec);
     deepEqual(updated, [ 10, 30 ]);
   });

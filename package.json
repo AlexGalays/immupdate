@@ -1,19 +1,26 @@
 {
   "name": "immupdate",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Immutable update for Object/Array",
-  "main": "immupdate.js",
+  "main": "lib/immupdate",
   "license": "MIT",
 
   "devDependencies": {
+    "babel-cli": "6.4.5",
+    "babel-preset-es2015-loose": "7.0.0",
     "mocha": "2.1.0",
     "better-assert": "1.0.1",
     "deep-equal": "1.0.0",
     "ramda": "0.6.0"
   },
+
   "scripts": {
-    "test": "mocha --ui tdd"
+    "build": "node node_modules/babel-cli/bin/babel.js immupdate.js --out-dir lib",
+    "test": "npm run build && mocha --ui tdd"
   },
+
+  "typings": "types.d.ts",
+
   "repository": {
     "type": "git",
     "url": "git://github.com/AlexGalays/immupdate.git"
@@ -24,7 +31,8 @@
     "clone",
     "collection",
     "Array",
-    "Object"
+    "Object",
+    "typescript"
   ],
   "author": "AlexGalays",
   "homepage": "https://github.com/AlexGalays/immupdate"
