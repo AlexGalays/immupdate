@@ -1,6 +1,6 @@
 {
   "name": "immupdate",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Immutable update for Object/Array",
   "main": "lib/immupdate",
   "license": "MIT",
@@ -20,6 +20,11 @@
   },
 
   "typings": "types.d.ts",
+
+  "files": [
+    "lib",
+    "types.d.ts"
+  ],
 
   "repository": {
     "type": "git",
