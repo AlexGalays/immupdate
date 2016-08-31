@@ -18,7 +18,7 @@ suite('immupdate', function() {
     objBefore = _.cloneObj(obj);
 
     var updated = update(obj, {
-      a: sleepy, // update
+      a: sleepy(obj.a), // update
       k: 'kiwi'  // add
     });
 
@@ -43,10 +43,10 @@ suite('immupdate', function() {
     objBefore = _.cloneObj(obj);
 
     var updated = update(obj, {
-      o: { name: sleepy },            // nested update
-      c: { name: { last: 'slice' } }, // even more nested update
-      k: { name: 'kiwi' },            // add object
-      l: 'lettuce'                    // add primitive,
+      o: { name: sleepy(obj.o.name) }, // nested update
+      c: { name: { last: 'slice' } },  // even more nested update
+      k: { name: 'kiwi' },             // add object
+      l: 'lettuce'                     // add primitive,
     });
 
     // Shortcut for single path updates
@@ -135,12 +135,14 @@ suite('immupdate', function() {
     ],
     peopleBefore = deepCopy(people);
 
+    var newFriends = (function(f) {
+      var withoutAlex = _.reject(_.eq('alex'), f);
+      return _.append('bob', withoutAlex);
+    })(people[0].friends)
+
     var updated = update(people, {
-      0: { friends: function(f) {
-        var withoutAlex = _.reject(_.eq('alex'), f);
-        return _.append('bob', withoutAlex);
-      }},
-      2: { friends: function(f) { return f.concat('bob') } }
+      0: { friends: newFriends },
+      2: { friends: people[2].friends.concat('bob') }
     });
 
     assert(updated != people);
@@ -186,7 +188,7 @@ suite('immupdate', function() {
     var updated = updateKey(host, 'array.' + host.array.length, 40);
     deepEqual(updated, { array: [ 10, 20, 30, 40 ] });
 
-    updated = updateKey(host, 'array', function(array) { return array.concat(40) });
+    updated = updateKey(host, 'array', host.array.concat(40));
     deepEqual(updated, { array: [ 10, 20, 30, 40 ] });
   });
 
@@ -194,12 +196,10 @@ suite('immupdate', function() {
   test('Replacing an object entirely, by reference', function() {
     var host = [ {}, {} ];
     var replacement = {};
-    var updated = updateKey(host, '1', function() { return replacement });
 
-    // Alternate notation
-    var updated2 = updateKey(host, '1', replace(replacement));
+    var updated = updateKey(host, '1', replace(replacement));
 
-    assert(updated[1] == replacement && updated[1] == updated2[1]);
+    assert(updated[1] == replacement);
   });
 
 

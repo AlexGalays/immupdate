@@ -4,56 +4,55 @@ export default function update(host, spec) {
   // The type of the copy is inferred.
   const copy = host
     ? Array.isArray(host) ? host.slice() : clone(host)
-    : Array.isArray(spec) ? [] : {};
+    : Array.isArray(spec) ? [] : {}
 
   for (let key in spec) {
-    const specValue = spec[key];
+    const specValue = spec[key]
 
     if (specValue === DELETE) {
-      Array.isArray(copy) ? copy.splice(key, 1) : delete copy[key];
+      Array.isArray(copy) ? copy.splice(key, 1) : delete copy[key]
+    }
+    else if (specValue && specValue.__replace) {
+      copy[key] = specValue.value
     }
     // The spec continues deeper
     else if (isObject(specValue)) {
-      copy[key] = update(copy[key], specValue);
+      copy[key] = update(copy[key], specValue)
     }
     // Leaf update
     else {
-      const newValue = (typeof specValue === 'function')
-        ? specValue(copy[key])
-        : specValue;
-
-      copy[key] = newValue;
+      copy[key] = specValue
     }
   }
 
-  return copy;
+  return copy
 }
 
-// Single path string update like: update(obj, 'path1.path2.name', 'John');
+// Single path string update like: update(obj, 'path1.path2.name', 'John')
 export function updateKey(host, keyPath, value) {
-  const paths = keyPath.split('.');
-  const spec = {};
-  let currentObj = spec;
+  const paths = keyPath.split('.')
+  const spec = {}
+  let currentObj = spec
 
   paths.forEach((path, index) => {
-    if (index === paths.length - 1) currentObj[path] = value;
-    else currentObj[path] = currentObj = {};
-  });
+    if (index === paths.length - 1) currentObj[path] = value
+    else currentObj[path] = currentObj = {}
+  })
 
-  return update(host, spec);
+  return update(host, spec)
 }
 
 function clone(obj) {
-  const result = {};
-  Object.keys(obj).forEach(key => { result[key] = obj[key] });
-  return result;
+  const result = {}
+  Object.keys(obj).forEach(key => { result[key] = obj[key] })
+  return result
 }
 
 function isObject(x) { return x && typeof x === 'object' && !Array.isArray(x) }
 
 
-export const DELETE = {};
+export const DELETE = {}
 
 export function replace(value) {
-  return () => value;
-};
+  return { __replace: true, value }
+}
