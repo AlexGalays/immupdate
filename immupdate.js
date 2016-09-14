@@ -48,7 +48,12 @@ function clone(obj) {
   return result
 }
 
-function isObject(x) { return x && typeof x === 'object' && !Array.isArray(x) }
+function isObject(x) {
+  return x &&
+  typeof x === 'object' &&
+  !Array.isArray(x) &&
+  !(x instanceof Date)
+}
 
 
 export const DELETE = {}

@@ -227,6 +227,17 @@ suite('immupdate', function() {
     deepEqual(updated, { a: 10, b: 20, c: fn })
   })
 
+
+  test('Updating an object with a date value', function() {
+    var host = { a: 10 }
+    var now = new Date()
+    var spec = { b: now }
+    var updated = update(host, spec)
+
+    assert(updated.a === 10)
+    assert(updated.b === now)
+  })
+
 })
 
 
