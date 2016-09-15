@@ -79,7 +79,7 @@ const people = [
 ];
 
 const updated = update(people, {
-  0: { friends: f => f.concat(10) }
+  0: { friends: replace(people[0].friends.concat(10)) }
 });
 
 // Assertions
@@ -103,16 +103,6 @@ By providing a function instead of a value, the function result will be used as-
 The current value is passed as the only argument to the function.
 Be careful as it is now your responsability to provide a proper, non-mutated-in-place value.
 
-```javascript
-import { updateKey } from 'immupdate';
-
-const host = [ {}, {} ];
-const replacement = { a: 1 };
-const updated = updateKey(host, '1', current => replacement);
-
-assert(updated[1] === replacement);
-```
-For this operation to be more self-documented, a function is also provided:
 ```javascript
 import { updateKey, replace } from 'immupdate';
 
