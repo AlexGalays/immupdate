@@ -1,6 +1,6 @@
 {
   "name": "immupdate",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Immutable update for Object/Array",
   "main": "lib/immupdate",
   "license": "MIT",
