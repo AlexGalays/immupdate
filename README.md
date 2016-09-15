@@ -23,7 +23,7 @@ immupdate only updates the paths that changed and only at update time, not defen
 
 # Why Object/Array instead of immutable data structures
 
-Pros:  
+Pros:
 
 - This lib is tiny and only manipulate JS' native data structures. Immutable data structures with a rich API will usually come packaged as a fairly big library.
 - No need for encoding/decoding when the server sends JSON data structures. With immutable data structures, they must first be converted into deeply nested data structures.
@@ -32,7 +32,7 @@ Pros:
 - Persisting to localStorage is often done via JSON.stringify() for convenience, this is trivial when we are this close to the metal.
 - Popular third party libraries work with plain Objects or Arrays; This might change in a few years when JS has higher level abstractions like iterators available in mainstream browsers and libraries make use of it instead of having a hard dependency on Arrays (or with new languages directly compiling to byte code).
 
-Cons:  
+Cons:
 
 - Immutability can NOT be enforced as the underlying structures are still mutable. Coding conventions and discipline is more important than with well designed immutable data structures.
 - Due to the highly dynamic nature of the API, it is not possible to provide a proper typesafe interface (typescript, flow).  Type safety on writes are effectively exchanged for terse and performant update code. Note however that Immutable-js also doesn't provide type safety for many operations (Records, updateIn, mergeIn, etc).
@@ -42,7 +42,7 @@ Cons:
 <a name="update-property"></a>
 ## Updating a property
 
-By default, as this is by far the most common operation, `update` will merge (and replace if applicable) all the keys from the passed object unto the target object, key by key.  
+By default, as this is by far the most common operation, `update` will merge (and replace if applicable) all the keys from the passed object unto the target object, key by key.
 
 ```javascript
 import update, { updateKey } from 'immupdate';
@@ -66,7 +66,7 @@ const updated = update(person, {
 // Or the simple string path notation, useful for single updates
 const updated2 = updateKey(person, 'prefs.csvSep', ';');
 ```
-`person` was only updated where necessary. Below in green are the paths that were updated.  
+`person` was only updated where necessary. Below in green are the paths that were updated.
 ![update](http://i171.photobucket.com/albums/u320/boubiyeah/Screen%20Shot%202015-04-19%20at%2000.15.12_zps4gvttcxd.png)
 
 
@@ -99,9 +99,9 @@ assert(updated[1] === people[1]);
 <a name="replace-property"></a>
 ## Fully replace a property by reference
 
-By providing a function instead of a value, the function result will be used as-is to fully replace the target.  
-The current value is passed as the only argument to the function.  
-Be careful as it is now your responsability to provide a proper, non-mutated-in-place value.  
+By providing a function instead of a value, the function result will be used as-is to fully replace the target.
+The current value is passed as the only argument to the function.
+Be careful as it is now your responsability to provide a proper, non-mutated-in-place value.
 
 ```javascript
 import { updateKey } from 'immupdate';
@@ -124,13 +124,13 @@ const updated = updateKey(host, '1', replace(replacement));
 <a name="delete-property"></a>
 ## Delete a property
 
-By using a special marker, an object key can actually be deleted:  
+By using a special marker, an object key can actually be deleted:
 
 ```javascript
 import update, { DELETE } from 'immupdate';
 
 const host = { a: 33, b: 44 };
-const spec = { a: update.DELETE };
+const spec = { a: DELETE };
 const updated = update(host, spec);
 
 deepEqual(updated, { b: 44 });
