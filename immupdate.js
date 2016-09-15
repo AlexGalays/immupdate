@@ -56,7 +56,7 @@ function isObject(x) {
 }
 
 
-export const DELETE = {}
+export const DELETE = '__immupdate_DELETE';
 
 export function replace(value) {
   return { __replace: true, value }
