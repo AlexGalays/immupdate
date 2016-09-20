@@ -18,7 +18,7 @@ suite('immupdate', function() {
     objBefore = _.cloneObj(obj)
 
     var updated = update(obj, {
-      a: sleepy(obj.a), // update
+      a: sleepy, // update
       k: 'kiwi'  // add
     })
 
@@ -43,7 +43,7 @@ suite('immupdate', function() {
     objBefore = _.cloneObj(obj)
 
     var updated = update(obj, {
-      o: { name: sleepy(obj.o.name) }, // nested update
+      o: { name: sleepy }, // nested update
       c: { name: { last: 'slice' } },  // even more nested update
       k: { name: 'kiwi' },             // add object
       l: 'lettuce'                     // add primitive,
@@ -216,15 +216,6 @@ suite('immupdate', function() {
     var spec = { 1: DELETE }
     var updated = update(host, spec)
     deepEqual(updated, [ 10, 30 ])
-  })
-
-
-  test('Updating an object with a function value', function() {
-    var host = { a: 10 }
-    var fn = function() {}
-    var spec = { b: 20, c: fn }
-    var updated = update(host, spec)
-    deepEqual(updated, { a: 10, b: 20, c: fn })
   })
 
 

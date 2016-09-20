@@ -21,7 +21,11 @@ export default function update(host, spec) {
     }
     // Leaf update
     else {
-      copy[key] = specValue
+      const newValue = (typeof specValue === 'function')
+        ? specValue(copy[key])
+        : specValue
+
+      copy[key] = newValue
     }
   }
 
