@@ -2,6 +2,9 @@
 
 immutable update util for JS `Object`.
 
+This branch (master) holds the typescript optimized version (shallow update).  
+For the previous 0.x version (deep update), see [here](https://github.com/AlexGalays/immupdate/tree/0.x)
+
 
 * [Update multiple properties](#update-multiple-properties)
 * [Update a dynamic property](#update-dynamic-property)
