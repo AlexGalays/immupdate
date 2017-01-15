@@ -1,30 +1,27 @@
 {
   "name": "immupdate",
-  "version": "0.4.0",
-  "description": "Immutable update for Object/Array",
+  "version": "1.0.0",
+  "description": "Immutable update for Objects",
   "main": "lib/immupdate",
   "license": "MIT",
 
   "devDependencies": {
-    "babel-cli": "6.4.5",
-    "babel-preset-es2015": "6.14.0",
-    "babel-preset-es2015-loose": "7.0.0",
-    "mocha": "2.1.0",
-    "better-assert": "1.0.1",
-    "deep-equal": "1.0.0",
-    "ramda": "0.6.0"
+    "typescript": "2.1.5",
+    "mocha": "2.2.5",
+    "expect": "1.8.0",
+    "chalk": "1.1.1"
   },
 
   "scripts": {
-    "build": "node node_modules/babel-cli/bin/babel.js immupdate.js --out-dir lib",
-    "test": "npm run build && mocha --ui tdd"
+    "build": "tsc immupdate.ts --outDir ./lib --declaration --noImplicitAny --strictNullChecks",
+    "pretest": "npm run build && node_modules/typescript/bin/tsc test/mocha.d.ts test/global.d.ts test/test.ts",
+    "test": "mocha test/test.js && node test/testCompilationErrors.js"
   },
 
-  "typings": "types.d.ts",
+  "typings": "lib/types.d.ts",
 
   "files": [
-    "lib",
-    "types.d.ts"
+    "lib"
   ],
 
   "repository": {
@@ -38,6 +35,8 @@
     "collection",
     "Array",
     "Object",
+    "model",
+    "data",
     "typescript"
   ],
   "author": "AlexGalays",

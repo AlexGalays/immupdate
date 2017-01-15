@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true
+  },
+  "compileOnSave": false,
+  "filesGlob": ["**/*.ts"]
+}
