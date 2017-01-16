@@ -8,7 +8,8 @@ For the previous 0.x version (deep update), see [here](https://github.com/AlexGa
 
 * [Update multiple properties](#update-multiple-properties)
 * [Update a dynamic property](#update-dynamic-property)
-* [Replace a nested property](#replace-nested-property)
+* [Update a nested property](#update-nested-property)
+* [Update an Array property](#update-array-property)
 * [More safety with Object.freeze](#object-freeze)
 
 
@@ -39,7 +40,7 @@ Coding conventions and discipline is more important than with well designed immu
 # Examples
 
 <a name="update-multiple-properties"></a>
-## Updating multiple properties
+## Update multiple properties
 
 ```ts
 import { update, DELETE } from 'immupdate'
@@ -60,7 +61,7 @@ const carla = update(jose, {
 
 
 <a name="update-dynamic-property"></a>
-## Updating a dynamic property
+## Update a dynamic property
 
 Sometimes, there are so many properties that we'd rather just update a property by name, losing typesafety for convenience.  
 
@@ -75,8 +76,8 @@ const updatedForm = update(form, { [myKey]: 'hello' })
 ```
 
 
-<a name="replace-nested-property"></a>
-## Replacing a nested property
+<a name="update-nested-property"></a>
+## Update a nested property
 
 `immupdate` performs shallow updates, so we will just have to call it multiple times.
 
@@ -102,6 +103,33 @@ const personWithNewPrefs = update(person, { prefs: newPrefs })
 
 `person` was only updated where necessary. Below in green are the paths that were updated. This is much more efficient than deep cloning.  
 ![update](http://i171.photobucket.com/albums/u320/boubiyeah/Screen%20Shot%202015-04-19%20at%2000.15.12_zps4gvttcxd.png)
+
+
+<a name="update-array-property"></a>
+## Update an Array property
+
+`immupdate` doesn't specifically deal with Arrays, so we just want to prepare the updated Array instance beforehand.  
+I usually have a local set of utils for Arrays, Objects, strings, etc.  
+
+```ts
+import { update } from 'immupdate'
+import * as arr from 'util/array'
+
+const person = {
+  friends: [
+    { id: 1, name: 'biloute' },
+    { id: 2, name: 'roberto' },
+    { id: 3, name: 'jesus' }
+  ]
+}
+
+const newFriends = arr.removeWhere(person.friends, f => f.id === 3)
+
+const newPerson = update(person, { friends: newFriends })
+```
+
+
+
 
 
 <a name="object-freeze"></a>
