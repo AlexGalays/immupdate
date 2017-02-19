@@ -1,12 +1,12 @@
 {
   "name": "immupdate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Immutable update for Objects",
   "main": "lib/immupdate",
   "license": "MIT",
 
   "devDependencies": {
-    "typescript": "2.1.5",
+    "typescript": "next",
     "mocha": "2.2.5",
     "expect": "1.8.0",
     "chalk": "1.1.1"
@@ -18,7 +18,7 @@
     "test": "mocha test/test.js && node test/testCompilationErrors.js"
   },
 
-  "typings": "lib/types.d.ts",
+  "typings": "lib/immupdate.d.ts",
 
   "files": [
     "lib"
