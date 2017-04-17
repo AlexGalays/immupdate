@@ -1,20 +1,4 @@
 
-// Do not deep freeze by default as it's slow
-let deepFreeze: any = null
-
-declare const process: any
-if (typeof process === 'object' && process && process.env && process.env.IMMUPDATE_DEEP_FREEZE === 'true') {
-  deepFreeze = function(obj: any) {
-    Object.getOwnPropertyNames(obj).forEach(name => {
-      const prop = obj[name]
-      if (typeof prop === 'object' && prop !== null)
-        deepFreeze(prop)
-    })
-    Object.freeze(obj)
-  }
-}
-
-
 /** Performs a shallow update of an object using a partial object of the same shape. A new object is returned. */
 export function update<Obj extends {}, K extends keyof Obj>(host: Obj, spec: Pick<Obj, K>): Obj {
   const result = {} as Obj
@@ -30,9 +14,6 @@ export function update<Obj extends {}, K extends keyof Obj>(host: Obj, spec: Pic
       result[key] = specValue
     }
   }
-
-  if (deepFreeze)
-    deepFreeze(result)
 
   return result
 }

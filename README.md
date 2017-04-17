@@ -10,7 +10,6 @@ For the previous 0.x version (deep update), see [here](https://github.com/AlexGa
 * [Update a dynamic property](#update-dynamic-property)
 * [Update a nested property](#update-nested-property)
 * [Update an Array property](#update-array-property)
-* [More safety with Object.freeze](#object-freeze)
 
 
 # Why not just recursively deep clone defensively
@@ -127,15 +126,3 @@ const newFriends = arr.removeWhere(person.friends, f => f.id === 3)
 
 const newPerson = update(person, { friends: newFriends })
 ```
-
-
-
-
-
-<a name="object-freeze"></a>
-## More safety with Object.freeze
-
-The object returned by `update` can optionally be deeply frozen.
-This can be useful in development mode, to catch mutation attempts as early as possible.  
-
-To enable this mode, ensure your dev build sets the value of `process.env.IMMUPDATE_DEEP_FREEZE` to `'true'`.

@@ -1,5 +1,3 @@
-process.env.IMMUPDATE_DEEP_FREEZE = 'true'
-
 import { update, DELETE } from '../'
 
 const expect = require('expect')
@@ -50,12 +48,6 @@ describe('immupdate', () => {
     const result = update(obj, { a: null })
     expect(result).toEqual({ a: null, b: 44 })
     expect(obj).toEqual({ a: 33, b: 44 })
-  })
-
-  it('returns deeply frozen objects in dev mode', () => {
-    const result = update({ a: 33, b: { c: 22 } }, { a: 66 })
-    expect(() => { result.a = 88 }).toThrow()
-    expect(() => { result.b.c = 88 }).toThrow()
   })
 
 })
