@@ -1,12 +1,12 @@
 {
   "name": "immupdate",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Immutable update for Objects",
   "main": "lib/immupdate",
   "license": "MIT",
 
   "devDependencies": {
-    "typescript": "next",
+    "typescript": "2.3.2",
     "mocha": "2.2.5",
     "expect": "1.8.0",
     "chalk": "1.1.1"

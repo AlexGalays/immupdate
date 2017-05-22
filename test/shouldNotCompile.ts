@@ -1,6 +1,10 @@
 
-import { update, DELETE } from '../'
+import { update, DELETE, deepUpdate } from '../'
 
+
+//--------------------------------------
+//  Update
+//--------------------------------------
 
 // Updating with a non-object @shouldNotCompile
 update({ a: 33 }, 'nani')
@@ -59,3 +63,70 @@ update(state, {
 
 // Assigning to the wrong object type @shouldNotCompile
 const result: { a: string } = update({ a: 33 }, { a: 44 })
+
+// Trying to update with a numeric index @shouldNotCompile
+// TODO: Broken currently (https://github.com/Microsoft/TypeScript/issues/13906)
+const daIndex = 8000
+update({ a: 33 }, { [daIndex]: 'lol' })
+
+
+
+//--------------------------------------
+//  Deep update
+//--------------------------------------
+
+// Updating a primitive @shouldNotCompile
+deepUpdate<number>()
+
+// Trying to update the root @shouldNotCompile
+deepUpdate<{}>().set({})({})
+
+// update with the wrong target type @shouldNotCompile
+deepUpdate<{ a: number }>()
+  .at('a')
+  .set(10)({ b: 1 })
+
+// Chaining a nested primitive @shouldNotCompile
+deepUpdate<{ kiki: { koko: number } }>()
+  .at('kiki')
+  .at('koko')
+  .at('toExponential')
+
+// Updating an Array with a string key instead of an index @shouldNotCompile
+deepUpdate<number[]>()
+  .at('join')
+  .set(3)([])
+
+// Updating an Object with a number key instead of a string @shouldNotCompile
+deepUpdate<{ hello: number }>()
+  .at(10)
+  .set(3)({ hello: 10 })
+
+// Updating an Object with a nullable path in the middle @shouldNotCompile
+deepUpdate<{ hello?: { hi: number } }>()
+  .at('hello')
+  .at('hi')
+
+// Setting a nullable path's default with the wrong type @shouldNotCompile
+deepUpdate<{ hello?: { hi: number } }>()
+  .at('hello')
+  .withDefault({ hi: '10' })
+  .at('hi')
+
+// A non leaf at(index) on an Array without a withDefault @shouldNotCompile
+deepUpdate<{ a: number }[]>()
+  .at(10)
+  .at('a')
+
+// A bound update with the wrong type @shouldNotCompile
+deepUpdate({ a: 10 })
+  .at('b')
+
+// A bound update with the wrong type @shouldNotCompile
+deepUpdate({ a: 10 })
+  .at(0)
+
+// A bound update with the wrong type @shouldNotCompile
+deepUpdate({ a: 10 })
+  .at('a')
+  .set('20')
