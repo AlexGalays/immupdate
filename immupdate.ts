@@ -140,9 +140,10 @@ Updater.prototype = {
 
   set(value: any) {
     const doSet = (target: any) => {
-      const [clonedTarget, leafHost, aborted] = this.cloneForUpdate(target)
+      const [clonedTarget, leafHost, field, aborted] = this.cloneForUpdate(target)
       if (aborted) return target
-      leafHost[this.field] = value
+
+      leafHost[field] = value
       return clonedTarget
     }
 
@@ -153,9 +154,10 @@ Updater.prototype = {
 
   modify<V>(modifier: (value: V) => V) {
     const doModify = (target: any) => {
-      const [clonedTarget, leafHost, aborted] = this.cloneForUpdate(target)
+      const [clonedTarget, leafHost, field, aborted] = this.cloneForUpdate(target)
       if (aborted) return target
-      leafHost[this.field] = modifier(leafHost[this.field])
+
+      leafHost[field] = modifier(leafHost[field])
       return clonedTarget
     }
 
@@ -172,6 +174,7 @@ Updater.prototype = {
     return updater({ parent: this, field: undefined, abort: true })
   },
 
+
   rootUpdater() {
     let current = this
     while (true) {
@@ -181,7 +184,7 @@ Updater.prototype = {
   },
 
   parentUpdaters() {
-    let updaters: any[] = []
+    let updaters: any[] = [this]
     let parentUpdater = this.parent
 
     // Ignore the root updater
@@ -197,24 +200,39 @@ Updater.prototype = {
     const updaters = this.parentUpdaters()
     let obj = clone(target)
     let currentObj = obj
-    let newObj
+    let lastObj = obj
 
-    for (let i = 0; i < updaters.length; i++) {
+    for (let i = 0; i < updaters.length - 1; i++) {
       const updater = updaters[i]
 
-      if (updater.field) {
-        if (currentObj[updater.field])
-          newObj = clone(currentObj[updater.field])
-        else if (updaters[i+1].abort)
-          return [, , true]
-        else
-          newObj = updaters[i+1].defaultValue
+      // Ignore abortIfUndef/withDefault Updaters who have nothing to contribute
+      if (!updater.field) continue
 
-        currentObj = currentObj[updater.field] = newObj
-      }
+      let newObj
+
+      // The Updater reads an Object or Array
+      if (currentObj[updater.field])
+        newObj = clone(currentObj[updater.field])
+      // The Updater reads a null/undefined value and the next Updater is an abortIfUndef()
+      else if (updaters[i+1].abort)
+        return [,,, true]
+      // The Updater reads a null/undefined value and the next Updater is an withDefault()
+      else
+        newObj = updaters[i+1].defaultValue
+
+      lastObj = currentObj
+      currentObj = currentObj[updater.field] = newObj
     }
 
-    return [obj, currentObj]
+    const leafHost = this.field !== undefined
+      ? currentObj
+      : lastObj
+
+    const field = this.field !== undefined
+      ? this.field
+      : updaters[updaters.length - 2].field
+
+    return [obj, leafHost, field, false]
   }
 }
 

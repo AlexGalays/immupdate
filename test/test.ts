@@ -292,6 +292,147 @@ describe('immupdate', () => {
       expect(result.prefs).toBe(person.prefs)
     })
 
+    it('can have a withDefault() in the last position', () => {
+      interface Panel {
+        id?: string
+        isCollapsed?: false
+        data?: number
+      }
+
+      const defaultPanel: Panel = { isCollapsed: false }
+
+      interface PanelCollection {
+        panels: { [panelId: string]: Panel }
+      }
+
+      const initial: PanelCollection = {
+        panels: {}
+      }
+
+      const updatedPanel = { id: '01', data: 333 }
+
+      const result = deepUpdate(initial)
+        .at('panels')
+        .at(updatedPanel.id)
+        .withDefault(defaultPanel)
+        .modify(p => ({ ...p, ...updatedPanel }))
+
+      expect(result).toEqual({
+        panels: {
+          '01': {
+            id: '01',
+            isCollapsed: false,
+            data: 333
+          }
+        }
+      })
+    })
+
+    it('can have multiple withDefault() in the chain', () => {
+      interface NestedStructure {
+        a?: {
+          b?: {
+            c: number
+          },
+          bb: string
+        }
+      }
+
+      const nestedStructure: NestedStructure = {}
+
+      const result = deepUpdate(nestedStructure)
+        .at('a')
+        .withDefault({ bb: 'bbb' })
+        .at('b')
+        .withDefault({ c: 10 })
+        .at('c')
+        .modify(v => v * 10)
+
+      expect(result).toEqual({
+        a: {
+          b: {
+            c: 100
+          },
+          bb: 'bbb'
+        }
+      })
+
+    })
+
+    it('can have multiple abortIfUndef() in the chain', () => {
+      interface NestedStructure {
+        a?: {
+          b?: {
+            c: number
+          },
+          bb: string
+        }
+      }
+
+      const nestedStructure: NestedStructure = {}
+
+      const result = deepUpdate(nestedStructure)
+        .at('a')
+        .abortIfUndef()
+        .at('b')
+        .abortIfUndef()
+        .at('c')
+        .modify(v => v * 10)
+
+      expect(result).toBe(nestedStructure)
+    })
+
+    it('can have an abortIfUndef() in the last position', () => {
+      interface Panel {
+        id?: string
+        isCollapsed?: false
+        data?: number
+      }
+
+      const defaultPanel: Panel = { isCollapsed: false }
+
+      interface PanelCollection {
+        panels: { [panelId: string]: Panel }
+      }
+
+      const emptyCollection: PanelCollection = {
+        panels: {}
+      }
+
+      const collection: PanelCollection = {
+        panels: {
+          '01': defaultPanel
+        }
+      }
+
+      const updatedPanel = { id: '01', data: 333 }
+
+      const result = deepUpdate(emptyCollection)
+        .at('panels')
+        .at(updatedPanel.id)
+        .abortIfUndef()
+        .set(updatedPanel)
+
+      expect(result).toEqual({
+        panels: {}
+      })
+
+      const result2 = deepUpdate(collection)
+        .at('panels')
+        .at(updatedPanel.id)
+        .abortIfUndef()
+        .set(updatedPanel)
+
+      expect(result2).toEqual({
+        panels: {
+          '01': updatedPanel
+        }
+      })
+
+      expect(result2.panels).toNotBe(collection.panels)
+      expect(result2.panels['01']).toBe(updatedPanel)
+    })
+
     it('can create a structure ready to be reused for multiple updates', () => {
 
       // setup code
