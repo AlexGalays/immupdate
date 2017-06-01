@@ -36,36 +36,36 @@ export const DELETE = {} as any as undefined
 export type ObjectLiteral = object & { reduceRight?: 'nope' }
 
 
-export interface At<R, O> {
+export interface AtUpdater<R, O> {
   __T: [R, O] // Strengthen structural typing
 
   /**
    * Selects this Object key for update or further at() chaining
    */
-  at<K extends keyof O>(this: At<R, ObjectLiteral>, key: K): Updater<R, O[K]>
+  at<K extends keyof O>(this: AtUpdater<R, ObjectLiteral>, key: K): Updater<R, O[K]>
 
   /**
    * Selects an Array index for update or further at() chaining
    */
-  at<A>(this: At<R, A[]>, index: number): Updater<R, A | undefined>
+  at<A>(this: AtUpdater<R, A[]>, index: number): Updater<R, A | undefined>
 }
 
 // The at interface carrying a pre-bound value
-export interface BoundAt<R, O> {
+export interface BoundAtUpdater<R, O> {
   __T: [R, O]
 
   /**
    * Selects this Object key for update or further at() chaining
    */
-  at<K extends keyof O>(this: BoundAt<R, ObjectLiteral>, key: K): BoundUpdater<R, O[K]>
+  at<K extends keyof O>(this: BoundAtUpdater<R, ObjectLiteral>, key: K): BoundUpdater<R, O[K]>
 
   /**
    * Selects an Array index for update or further at() chaining
    */
-  at<A>(this: BoundAt<R, A[]>, index: number): BoundUpdater<R, A | undefined>
+  at<A>(this: BoundAtUpdater<R, A[]>, index: number): BoundUpdater<R, A | undefined>
 }
 
-export interface Updater<R, O> extends At<R, O> {
+export interface Updater<R, O> extends AtUpdater<R, O> {
   __T: [R, O]
 
   /**
@@ -89,7 +89,7 @@ export interface Updater<R, O> extends At<R, O> {
   abortIfUndef<B>(this: Updater<R, B | undefined>): Updater<R, B>
 }
 
-export interface BoundUpdater<R, O> extends BoundAt<R, O> {
+export interface BoundUpdater<R, O> extends BoundAtUpdater<R, O> {
   __T: [R, O]
 
   /**
@@ -114,29 +114,38 @@ export interface BoundUpdater<R, O> extends BoundAt<R, O> {
 }
 
 
-function updater(options: {
-  parent?: any,
-  field?: any,
-  boundTarget?: any,
-  defaultValue?: any,
-  abort?: boolean
-}) {
-  return new (Updater as any)(options)
+interface Root {
+  type: 'root'
+  boundTarget: {} | undefined
 }
 
-function Updater(options: any) {
-  this.parent = options.parent
-  this.field = options.field
-  this.boundTarget = options.boundTarget
-  this.defaultValue = options.defaultValue
-  this.abort = options.abort
+interface At {
+  type: 'at'
+  field: string | number
+  parent: any
 }
 
-Updater.prototype = {
+interface WithDefault {
+  type: 'withDefault'
+  defaultValue: any
+  parent: any
+}
+
+interface AbortIfUndef {
+  type: 'abortIfUndef'
+  parent: any
+}
+
+type UpdaterData = Root | At | WithDefault | AbortIfUndef
+
+
+
+class _Updater {
+  constructor(public data: UpdaterData) {}
 
   at(keyOrIndex: any): any {
-    return updater({ parent: this, field: keyOrIndex })
-  },
+    return new _Updater({ type: 'at', parent: this, field: keyOrIndex })
+  }
 
   set(value: any) {
     const doSet = (target: any) => {
@@ -147,10 +156,12 @@ Updater.prototype = {
       return clonedTarget
     }
 
-    const boundTarget = this.rootUpdater().boundTarget
+    const boundTarget = this.findBoundTarget()
 
-    return boundTarget ? doSet(boundTarget) : doSet
-  },
+    return boundTarget
+      ? doSet(boundTarget)
+      : doSet
+  }
 
   modify<V>(modifier: (value: V) => V) {
     const doModify = (target: any) => {
@@ -161,81 +172,79 @@ Updater.prototype = {
       return clonedTarget
     }
 
-    const boundTarget = this.rootUpdater().boundTarget
+    const boundTarget = this.findBoundTarget()
 
-    return boundTarget ? doModify(boundTarget) : doModify
-  },
+    return boundTarget
+      ? doModify(boundTarget)
+      : doModify
+  }
 
   withDefault(value: any): any {
-    return updater({ parent: this, field: undefined, defaultValue: value })
-  },
+    return new _Updater({ type: 'withDefault', parent: this, defaultValue: value })
+  }
 
-  abortIfUndef<B>(): any {
-    return updater({ parent: this, field: undefined, abort: true })
-  },
+  abortIfUndef(): any {
+    return new _Updater({ type: 'abortIfUndef', parent: this })
+  }
 
-
-  rootUpdater() {
+  findBoundTarget() {
     let current = this
     while (true) {
-      if (!current.parent) return current
-      current = current.parent
+      if (current.data.type === 'root') return current.data.boundTarget
+      current = current.data.parent
     }
-  },
+  }
 
   parentUpdaters() {
-    let updaters: any[] = [this]
-    let parentUpdater = this.parent
+    let updaters = [this]
+    let parentUpdater = (this.data as any).parent
 
     // Ignore the root updater
-    while (parentUpdater && parentUpdater.parent) {
+    while (parentUpdater && parentUpdater.data.parent) {
       updaters.unshift(parentUpdater)
-      parentUpdater = parentUpdater.parent
+      parentUpdater = parentUpdater.data.parent
     }
 
     return updaters
-  },
+  }
 
   cloneForUpdate(target: any) {
     const updaters = this.parentUpdaters()
-    let obj = clone(target)
+    const obj = clone(target)
+
     let currentObj = obj
     let lastObj = obj
 
     for (let i = 0; i < updaters.length - 1; i++) {
-      const updater = updaters[i]
+      const data = updaters[i].data
+      const nextData = updaters[i+1].data
 
-      // Ignore abortIfUndef/withDefault Updaters who have nothing to contribute
-      if (!updater.field) continue
+      if (data.type !== 'at') continue
 
-      let newObj
+      let newObj = currentObj[data.field]
 
-      // The Updater reads an Object or Array
-      if (currentObj[updater.field])
-        newObj = clone(currentObj[updater.field])
-      // The Updater reads a null/undefined value and the next Updater is an abortIfUndef()
-      else if (updaters[i+1].abort)
+      if (newObj !== undefined)
+        newObj = clone(newObj)
+      else if (nextData.type === 'abortIfUndef')
         return [,,, true]
-      // The Updater reads a null/undefined value and the next Updater is an withDefault()
-      else
-        newObj = updaters[i+1].defaultValue
+      else if (nextData.type === 'withDefault')
+        newObj = nextData.defaultValue
 
       lastObj = currentObj
-      currentObj = currentObj[updater.field] = newObj
+      currentObj = currentObj[data.field] = newObj
     }
 
-    const leafHost = this.field !== undefined
+    const leafHost = this.data.type === 'at'
       ? currentObj
       : lastObj
 
-    const field = this.field !== undefined
-      ? this.field
-      : updaters[updaters.length - 2].field
+    const field = this.data.type === 'at'
+      ? this.data.field
+      : (updaters[updaters.length - 2].data as At).field
 
     return [obj, leafHost, field, false]
   }
 }
-
 
 
 function clone(obj: any): any {
@@ -246,8 +255,8 @@ function clone(obj: any): any {
   return cloned
 }
 
-export function deepUpdate<O extends object>(target: O): BoundAt<O, O>
-export function deepUpdate<O extends object>(): At<O, O>
+export function deepUpdate<O extends object>(target: O): BoundAtUpdater<O, O>
+export function deepUpdate<O extends object>(): AtUpdater<O, O>
 export function deepUpdate(target?: any): any {
-  return updater({ boundTarget: target })
+  return new _Updater({ type: 'root', boundTarget: target })
 }

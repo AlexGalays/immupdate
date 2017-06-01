@@ -1,9 +1,13 @@
 {
   "compilerOptions": {
-    "noEmit": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true
+    "target": "es5",
+    "lib": [ "es5", "es6", "es2015.core" ],
+    "declaration": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "lib"
   },
   "compileOnSave": false,
-  "filesGlob": ["**/*.ts"]
+  "files": ["immupdate.ts"]
 }

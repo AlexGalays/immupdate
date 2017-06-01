@@ -13,7 +13,7 @@
   },
 
   "scripts": {
-    "build": "tsc immupdate.ts --outDir ./lib --declaration --noImplicitAny --strictNullChecks",
+    "build": "tsc",
     "pretest": "npm run build && node_modules/typescript/bin/tsc test/mocha.d.ts test/global.d.ts test/test.ts",
     "test": "mocha test/test.js && node test/testCompilationErrors.js"
   },
