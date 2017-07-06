@@ -466,6 +466,99 @@ describe('immupdate', () => {
 
     })
 
+    it('works with a real life example', () => {
+      type H1 = {
+        tag: string,
+        props: any,
+        children: Array<{
+          props: {
+            class: string
+            styles?: Record<string, string>,
+            value?: string
+            url?: string
+          }
+          tag: string
+        }>
+      }
+
+      const h1: H1 = {
+        "tag":"Group",
+        "props":{
+          "styles":{
+            "display":"flex",
+            "flex-direction":"row"
+          }
+        },
+        "children":[
+          {
+            "props":{
+              "class":"employee-name",
+              "styles":{
+                "color":"#33cc33"
+              },
+              "value":"Jane Doe "
+            },
+            "tag":"Text"
+          },
+          {
+            "props":{
+              "class":"employee-photo",
+              "url":"http..."
+            },
+            "tag":"Image"
+          }
+        ]
+      }
+
+      const h11 = deepUpdate(h1)
+        .at('children')
+        .at(0).abortIfUndef()
+        .at("props")
+        .at("styles").withDefault({})
+        .at('background-color').set('#ff0000')
+
+      const h12 = deepUpdate(h11)
+        .at('children')
+        .at(1).abortIfUndef()
+        .at("props")
+        .at("styles").withDefault({})
+        .at('background-color').set('#ffeedd')
+
+      expect(h12).toEqual({
+        "tag":"Group",
+        "props":{
+          "styles":{
+            "display":"flex",
+            "flex-direction":"row"
+          }
+        },
+        "children":[
+          {
+            "props":{
+              "class":"employee-name",
+              "styles":{
+                "color":"#33cc33",
+                "background-color": "#ff0000"
+              },
+              "value":"Jane Doe "
+            },
+            "tag":"Text"
+          },
+          {
+            "props":{
+              "class":"employee-photo",
+              "url":"http...",
+              "styles": {
+                "background-color": "#ffeedd"
+              }
+            },
+            "tag":"Image"
+          }
+        ]
+      })
+
+    })
+
   })
 
 })

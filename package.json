@@ -1,20 +1,20 @@
 {
   "name": "immupdate",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Immutable update for Objects and Arrays",
   "main": "lib/immupdate",
   "license": "MIT",
 
   "devDependencies": {
-    "typescript": "2.3.2",
+    "typescript": "2.4.1",
     "mocha": "2.2.5",
     "expect": "1.8.0",
     "chalk": "1.1.1"
   },
 
   "scripts": {
-    "build": "tsc",
-    "pretest": "npm run build && node_modules/typescript/bin/tsc test/mocha.d.ts test/global.d.ts test/test.ts",
+    "build": "tsc immupdate.ts --outDir lib --strict --noUnusedParameters --declaration --lib es5,es6",
+    "pretest": "npm run build && tsc test/mocha.d.ts test/global.d.ts test/test.ts --strict",
     "test": "mocha test/test.js && node test/testCompilationErrors.js"
   },
 

@@ -5,9 +5,8 @@
     "declaration": true,
     "strict": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "outDir": "lib"
+    "noUnusedParameters": true
   },
   "compileOnSave": false,
-  "files": ["immupdate.ts"]
+  "filesGlob": ["immupdate.ts", "test/**/*.ts"]
 }
