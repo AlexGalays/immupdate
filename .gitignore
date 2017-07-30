@@ -1,4 +1,5 @@
 node_modules
-lib
+commonjs
+es
 test/test.js
 npm-debug.log
