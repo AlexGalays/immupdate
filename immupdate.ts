@@ -152,7 +152,7 @@ class _Updater {
       const [clonedTarget, leafHost, field, aborted] = this.cloneForUpdate(target)
       if (aborted) return target
 
-      leafHost[field] = value
+      value === DELETE ? delete leafHost[field] : leafHost[field] = value
       return clonedTarget
     }
 
@@ -168,7 +168,8 @@ class _Updater {
       const [clonedTarget, leafHost, field, aborted] = this.cloneForUpdate(target)
       if (aborted) return target
 
-      leafHost[field] = modifier(leafHost[field])
+      const value = modifier(leafHost[field])
+      value === DELETE ? delete leafHost[field] : leafHost[field] = value
       return clonedTarget
     }
 

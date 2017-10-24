@@ -85,13 +85,33 @@ describe('immupdate', () => {
       }
     }
 
-    it('can update an Array', () => {
-      const result = deepUpdate<Array<Person | number>>()
+    it('can update a root Array', () => {
+      // regular notation
+      const result = deepUpdate([person, person, person])
+        .at(2)
+        .abortIfUndef()
+        .at('contact')
+        .at('email')
+        .set('jojo@gmail.com')
+
+      expect(result).toEqual([ person, person, {
+        id: '44',
+        contact: {
+          email: 'jojo@gmail.com',
+          phoneNumbers: []
+        },
+        customData: {
+          favoriteColor: 'blue'
+        }
+      } ])
+
+      // value-last notation
+      const result2 = deepUpdate<Array<Person | number>>()
         .at(2)
         .set(person)([1, 2])
 
-      expect(result).toEqual([ 1, 2, person ])
-      expect(result[2]).toBe(person)
+      expect(result2).toEqual([ 1, 2, person ])
+      expect(result2[2]).toBe(person)
     })
 
     it('can update a nested Array', () => {
@@ -433,6 +453,14 @@ describe('immupdate', () => {
       expect(result2.panels['01']).toBe(updatedPanel)
     })
 
+    it('can update an Array value', () => {
+      const data = { a: { b: ['hey'] } }
+      const updated = deepUpdate(data).at('a').at('b').set(['bye', ':)'])
+      expect(updated).toEqual({
+        a: { b: ['bye', ':)'] }
+      })
+    })
+
     it('can create a structure ready to be reused for multiple updates', () => {
 
       // setup code
@@ -557,6 +585,33 @@ describe('immupdate', () => {
         ]
       })
 
+    })
+
+    it('can delete a deep optional property', () => {
+
+      type NestedDict = {
+        a: { b: { c?: number, d?: number } }
+      }
+
+      const nestedDict: NestedDict = { a: { b: { c: 1, d: 2 } } }
+
+      const updated = deepUpdate(nestedDict)
+        .at('a')
+        .at('b')
+        .at('d')
+        .set(DELETE)
+
+      const updated2 = deepUpdate(nestedDict)
+        .at('a')
+        .at('b')
+        .at('d')
+        .modify(d => d === 2 ? DELETE : 3)
+
+      expect(updated).toEqual({ a: { b: { c: 1 } } })
+      expect(updated.a.b.d).toBe(undefined)
+
+      expect(updated2).toEqual({ a: { b: { c: 1 } } })
+      expect(updated2.a.b.d).toBe(undefined)
     })
 
   })
