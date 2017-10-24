@@ -169,6 +169,7 @@ import { deepUpdate } from 'immupdate'
 const newPerson = deepUpdate(person)
   .at('friends')
   .at(person.friends.findIndex(f => f.id === 3))
+  .abortIfUndef()
   .at('name')
   .set('rocky')
 ```
@@ -191,6 +192,7 @@ const person = {
 const newPerson = deepUpdate(person)
   .at('friends')
   .at(person.friends.findIndex(f => f.id === 3))
+  .abortIfUndef()
   .at('name')
   .modify(name => `MC ${name}`)
 ```
@@ -199,7 +201,7 @@ const newPerson = deepUpdate(person)
 <a name="update-nested-nullable-property"></a>
 ## Update a nested property on a nullable path
 
-If there is a nullable key anywhere in the update path and it's not the last key (right before `modify` or `set`)  
+If there is a nullable key (or An array index being used) anywhere in the update path and it's not the last key (i.e, right before `modify` or `set`)  
 then it's a potentially unsafe operation and the library will ask you to decide what to do with it (it won't compile until you do).  
 
 You can either:  
@@ -249,7 +251,7 @@ deepUpdate<Person>({})
 
 All the above examples used an ad-hoc style: The updater structure is created from scratch everytime we want to update something.  
 
-We can instead decide to reuse the structure for all updates (like when using lenses), if you believe the boilerplate pays off:  
+We can instead decide to reuse the structure for all updates (like when using lenses, only we're just using the write side), if you believe the boilerplate pays off:  
 
 ```ts
 import { deepUpdate } from 'immupdate'
@@ -264,7 +266,7 @@ const Person = (() => {
 
   return {
     contact: {
-      $: contact,
+      $: contact, // $ is just a convention meaning: "The updater found at the current branch"
       email,
       phoneNumbers
     }
