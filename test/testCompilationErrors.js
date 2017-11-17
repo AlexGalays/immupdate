@@ -8,7 +8,7 @@ const program = ts.createProgram(['test/shouldNotCompile'], tsOptions)
 const diagnostics = ts.getPreEmitDiagnostics(program)
 
 if (diagnostics.length === expectedErrorCount) {
-  console.log(chalk.green('All the expected compilation errors were found'))
+  console.log(chalk.green(`All the expected compilation errors were found (${expectedErrorCount})`))
 }
 else {
   const lines = errors(diagnostics).map(d => d.line).join(', ')

@@ -149,8 +149,11 @@ class _Updater {
 
   set(value: any) {
     const doSet = (target: any) => {
-      const [clonedTarget, leafHost, field, aborted] = this.cloneForUpdate(target)
-      if (aborted) return target
+
+      const result = this.cloneForUpdate(target)
+      if (result.name === 'aborted') return target
+
+      const { clonedTarget, leafHost, field } = result
 
       value === DELETE ? delete leafHost[field] : leafHost[field] = value
       return clonedTarget
@@ -165,10 +168,14 @@ class _Updater {
 
   modify<V>(modifier: (value: V) => V) {
     const doModify = (target: any) => {
-      const [clonedTarget, leafHost, field, aborted] = this.cloneForUpdate(target)
-      if (aborted) return target
+
+      const result = this.cloneForUpdate(target)
+      if (result.name === 'aborted') return target
+
+      const { clonedTarget, leafHost, field } = result
 
       const value = modifier(leafHost[field])
+
       value === DELETE ? delete leafHost[field] : leafHost[field] = value
       return clonedTarget
     }
@@ -209,44 +216,71 @@ class _Updater {
     return updaters
   }
 
-  cloneForUpdate(target: any) {
+  getNextValue(previousHost: any, host: any, field: string | number, isLast: boolean): any {
+
+    if (this.data.type === 'at') {
+      const newField = this.data.field
+      const value = host[newField]
+      const nextValue = isObjectOrArray(value) ? clone(value) : value
+      const newHost = isLast ? host : nextValue
+      host[this.data.field] = nextValue
+      return { host: newHost, field: newField }
+    }
+
+    const value = previousHost[field]
+
+    if (this.data.type === 'abortIfUndef' && value === undefined) {
+      return { host, field, aborted: true }
+    }
+
+    if (this.data.type === 'withDefault' && value === undefined) {
+      const nextValue = this.data.defaultValue
+      const newHost = isLast ? previousHost : nextValue
+      previousHost[field] = nextValue
+      return { host: newHost, field }
+    }
+
+    const newHost = isLast ? previousHost : host
+    return { host: newHost, field }
+  }
+
+  cloneForUpdate(target: any): { name: 'aborted' } | { name: 'result', clonedTarget: any, leafHost: any, field: any } {
     const updaters = this.parentUpdaters()
     const obj = clone(target)
 
-    let currentObj = obj
-    let lastObj = obj
+    let previousHost = obj
+    let host = obj
+    let field: string | number = ''
 
-    for (let i = 0; i < updaters.length - 1; i++) {
-      const data = updaters[i].data
-      const nextData = updaters[i+1].data
+    for (let i = 0; i < updaters.length; i++) {
 
-      if (data.type !== 'at') continue
+      const result = updaters[i].getNextValue(
+        previousHost,
+        host,
+        field,
+        i === updaters.length - 1
+      )
 
-      let newObj = currentObj[data.field]
+      if (result.aborted)
+        return { name: 'aborted' }
 
-      if (newObj !== undefined)
-        newObj = clone(newObj)
-      else if (nextData.type === 'abortIfUndef')
-        return [,,, true]
-      else if (nextData.type === 'withDefault')
-        newObj = nextData.defaultValue
-
-      lastObj = currentObj
-      currentObj = currentObj[data.field] = newObj
+      previousHost = host
+      host = result.host
+      field = result.field
     }
 
-    const leafHost = this.data.type === 'at'
-      ? currentObj
-      : lastObj
-
-    const field = this.data.type === 'at'
-      ? this.data.field
-      : (updaters[updaters.length - 2].data as At).field
-
-    return [obj, leafHost, field, false]
+    return {
+      name: 'result',
+      clonedTarget: obj,
+      leafHost: host,
+      field
+    }
   }
 }
 
+function isObjectOrArray(obj: any): boolean {
+  return obj !== null && typeof obj === 'object'
+}
 
 function clone(obj: any): any {
   if (Array.isArray(obj)) return obj.slice()

@@ -65,7 +65,6 @@ update(state, {
 const result: { a: string } = update({ a: 33 }, { a: 44 })
 
 // Trying to update with a numeric index @shouldNotCompile
-// TODO: Broken currently (https://github.com/Microsoft/TypeScript/issues/13906)
 const daIndex = 8000
 update({ a: 33 }, { [daIndex]: 'lol' })
 
@@ -130,3 +129,9 @@ deepUpdate({ a: 10 })
 deepUpdate({ a: 10 })
   .at('a')
   .set('20')
+
+// A modify() with the wrong type @shouldNotCompile
+type Prim = string | undefined
+deepUpdate({ a: 'aa' } as { a: Prim })
+  .at('a')
+  .modify(x => x.substr(0))

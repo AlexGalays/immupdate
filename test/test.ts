@@ -614,6 +614,50 @@ describe('immupdate', () => {
       expect(updated2.a.b.d).toBe(undefined)
     })
 
+    it('can modify a nested nullable property with or without abortIfUndef() in the last position', () => {
+
+      type NullableString = string | undefined
+      type Obj = { a: { b: NullableString } }
+
+      const obj1: Obj = { a: { b: undefined } }
+      const updated = deepUpdate(obj1)
+        .at('a')
+        .at('b')
+        .abortIfUndef()
+        .modify(s => s + '_')
+
+      expect(updated).toEqual({ a: { b: undefined} })
+      expect(updated).toBe(obj1)
+
+      const updated2 = deepUpdate(obj1)
+        .at('a')
+        .at('b')
+        .modify(s => s && 'hey')
+
+      expect(updated2).toEqual({ a: { b: undefined } })
+      expect(updated2).toNotBe(obj1)
+
+
+      const obj2: Obj = { a: { b: 'aaa' } }
+
+      const updated3 = deepUpdate(obj2)
+        .at('a')
+        .at('b')
+        .abortIfUndef()
+        .modify(s => s + '_')
+
+      expect(updated3).toEqual({ a: { b: 'aaa_'} })
+      expect(updated3).toNotBe(obj2)
+
+      const updated4: Obj = deepUpdate(obj2)
+        .at('a')
+        .at('b')
+        .modify(s => s + '_')
+
+      expect(updated4).toEqual({ a: { b: 'aaa_' } })
+      expect(updated4).toNotBe(obj2)
+    })
+
   })
 
 })
