@@ -13,6 +13,7 @@ This library only does simple updates (e.g setting, modifying or deleting a valu
   * [Update an Array item](#update-array-item)
   * [Update a nested property using its current value](#update-nested-property-modify)
   * [Update a nested property on a nullable path](#update-nested-nullable-property)
+  * [Update a nested union property](#update-nested-union-property)
   * [Reuse a nested updater](#reuse-nested-updater)
 
 
@@ -244,6 +245,26 @@ deepUpdate<Person>({})
   .withDefault(defaultPrefs)
   .at('lang')
   .set('en')
+```
+
+<a name="update-nested-union-property"></a>
+## Update a nested union property
+
+```ts
+import { deepUpdate } from 'immupdate'
+
+type A = { type: 'a', data: string }
+type B = { type: 'b', data: number }
+type Container = { aOrB: A | B }
+const isA = (u: A | B): u is A => u.type === 'a'
+
+const container = { aOrB: { type: 'a', data: 'aa' } }
+
+deepUpdate(container)
+  .at('aOrB')
+  .abortIfNot(isA)
+  .at('data')
+  .set('bb')
 ```
 
 <a name="reuse-nested-updater"></a>

@@ -658,6 +658,76 @@ describe('immupdate', () => {
       expect(updated4).toNotBe(obj2)
     })
 
+    it('can update an union member with an instance of this union', () => {
+
+      type A = { type: 'a', data: number }
+      type B = { type: 'b', data: string }
+      type U = A | B
+
+      type Obj = { u: U }
+
+      const obj: Obj = { u: { type: 'a', data: 10 } }
+
+      const updated = deepUpdate(obj)
+        .at('u')
+        .set({ type: 'b', data: '11' })
+
+      expect(updated).toEqual({
+        u: { type: 'b', data: '11' }
+      })
+    })
+
+    it('can abort if a simple condition is not met', () => {
+      type Obj = { a?: { version: number, data: string } }
+
+      const obj: Obj = { a: { version: 0, data: '001' } }
+
+      const updated = deepUpdate(obj)
+        .at('a')
+        .abortIfUndef()
+        .abortIfNot(a => a.version === 0)
+        .at('data')
+        .set('002')
+
+      expect(updated).toNotBe(obj)
+      expect(updated).toEqual({
+        a: { version: 0, data: '002' }
+      })
+
+      const obj2: Obj = { a: { version: 1, data: '001' } }
+      
+      const updated2 = deepUpdate(obj2)
+        .at('a')
+        .abortIfUndef()
+        .abortIfNot(a => a.version === 0)
+        .set({ version: 2, data: 'zzz' })
+
+      expect(updated2).toBe(obj2)
+    })
+
+    it('can abort if a type guard is not passed', () => {
+
+      type A = { type: 'a', data: number }
+      type B = { type: 'b', data: string }
+      type U = A | B
+
+      const isA = (u: U): u is A => u.type === 'a'
+
+      type Obj = { u: U }
+
+      const obj: Obj = { u: { type: 'a', data: 10 } }
+
+      const updated = deepUpdate(obj)
+        .at('u')
+        .abortIfNot(isA)
+        .at('data')
+        .set(20)
+
+      expect(updated).toEqual({
+        u: { type: 'a', data: 20 }
+      })
+    })
+
   })
 
 })

@@ -36,81 +36,101 @@ export const DELETE = {} as any as undefined
 export type ObjectLiteral = object & { reduceRight?: 'nope' }
 
 
-export interface AtUpdater<R, O> {
-  __T: [R, O] // Strengthen structural typing
+export interface AtUpdater<TARGET, CURRENT> {
+  __T: [TARGET, CURRENT] // Strengthen structural typing
 
   /**
    * Selects this Object key for update or further at() chaining
    */
-  at<K extends keyof O>(this: AtUpdater<R, ObjectLiteral>, key: K): Updater<R, O[K]>
+  at<K extends keyof CURRENT>(this: AtUpdater<TARGET, ObjectLiteral>, key: K): Updater<TARGET, CURRENT[K]>
 
   /**
    * Selects an Array index for update or further at() chaining
    */
-  at<A>(this: AtUpdater<R, A[]>, index: number): Updater<R, A | undefined>
+  at<A>(this: AtUpdater<TARGET, A[]>, index: number): Updater<TARGET, A | undefined>
 }
 
 // The at interface carrying a pre-bound value
-export interface BoundAtUpdater<R, O> {
-  __T: [R, O]
+export interface BoundAtUpdater<TARGET, CURRENT> {
+  __T: [TARGET, CURRENT]
 
   /**
    * Selects this Object key for update or further at() chaining
    */
-  at<K extends keyof O>(this: BoundAtUpdater<R, ObjectLiteral>, key: K): BoundUpdater<R, O[K]>
+  at<K extends keyof CURRENT>(this: BoundAtUpdater<TARGET, ObjectLiteral>, key: K): BoundUpdater<TARGET, CURRENT[K]>
 
   /**
    * Selects an Array index for update or further at() chaining
    */
-  at<A>(this: BoundAtUpdater<R, A[]>, index: number): BoundUpdater<R, A | undefined>
+  at<A>(this: BoundAtUpdater<TARGET, A[]>, index: number): BoundUpdater<TARGET, A | undefined>
 }
 
-export interface Updater<R, O> extends AtUpdater<R, O> {
-  __T: [R, O]
+export interface Updater<TARGET, CURRENT> extends AtUpdater<TARGET, CURRENT> {
+  __T: [TARGET, CURRENT]
 
   /**
    * Sets the value at the currently selected path.
    */
-  set(value: O): (target: R) => R
+  set(value: CURRENT): (target: TARGET) => TARGET
 
   /**
    * Modifies the value at the specified path. The current value is passed.
    */
-  modify(modifier: (value: O) => O): (target: R) => R
+  modify(modifier: (value: CURRENT) => CURRENT): (target: TARGET) => TARGET
 
   /**
    * Makes the previous nullable chain level 'safe' by using a default value
    */
-  withDefault<B, C extends B>(this: Updater<R, B | undefined>, defaultValue: C): Updater<R, B>
+  withDefault<B, C extends B>(this: Updater<TARGET, B | undefined>, defaultValue: C): Updater<TARGET, B>
 
   /**
    * Aborts the whole update operation if the previous chain level is null or undefined.
    */
-  abortIfUndef<B>(this: Updater<R, B | undefined>): Updater<R, B>
+  abortIfUndef<B>(this: Updater<TARGET, B | undefined>): Updater<TARGET, B>
+
+  /**
+   * Aborts the whole update operation if the previous chain level doesn't verify a type guard
+   */
+  abortIfNot<C extends CURRENT>(predicate: (value: CURRENT) => value is C): Updater<TARGET, C>
+
+  /**
+   * Aborts the whole update operation if the previous chain level doesn't verify a predicate
+   */
+  abortIfNot(predicate: (value: CURRENT) => boolean): Updater<TARGET, CURRENT>
 }
 
-export interface BoundUpdater<R, O> extends BoundAtUpdater<R, O> {
-  __T: [R, O]
+export interface BoundUpdater<TARGET, CURRENT> extends BoundAtUpdater<TARGET, CURRENT> {
+  __T: [TARGET, CURRENT]
 
   /**
    * Sets the value at the currently selected path.
    */
-  set(value: O): R
+  set(value: CURRENT): TARGET
 
   /**
    * Modifies the value at the specified path. The current value is passed.
    */
-  modify(modifier: (value: O) => O): R
+  modify(modifier: (value: CURRENT) => CURRENT): TARGET
 
   /**
    * Makes the previous nullable chain level 'safe' by using a default value
    */
-  withDefault<B, C extends B>(this: BoundUpdater<R, B | undefined>, defaultValue: C): BoundUpdater<R, B>
+  withDefault<B, C extends B>(this: BoundUpdater<TARGET, B | undefined>, defaultValue: C): BoundUpdater<TARGET, B>
 
   /**
    * Aborts the whole update operation if the previous chain level is null or undefined.
    */
-  abortIfUndef<B>(this: BoundUpdater<R, B | undefined>): BoundUpdater<R, B>
+  abortIfUndef<B>(this: BoundUpdater<TARGET, B | undefined>): BoundUpdater<TARGET, B>
+
+  /**
+   * Aborts the whole update operation if the previous chain level doesn't verify a type guard
+   */
+  abortIfNot<C extends CURRENT>(predicate: (value: CURRENT) => value is C): BoundUpdater<TARGET, C>
+
+  /**
+   * Aborts the whole update operation if the previous chain level doesn't verify a predicate
+   */
+  abortIfNot(predicate: (value: CURRENT) => boolean): BoundUpdater<TARGET, CURRENT>
 }
 
 
@@ -131,12 +151,13 @@ interface WithDefault {
   parent: any
 }
 
-interface AbortIfUndef {
-  type: 'abortIfUndef'
+interface AbortIfNot {
+  type: 'abortIfNot'
+  predicate: any
   parent: any
 }
 
-type UpdaterData = Root | At | WithDefault | AbortIfUndef
+type UpdaterData = Root | At | WithDefault | AbortIfNot
 
 
 
@@ -191,8 +212,12 @@ class _Updater {
     return new _Updater({ type: 'withDefault', parent: this, defaultValue: value })
   }
 
+  abortIfNot(predicate: any): any {
+    return new _Updater({ type: 'abortIfNot', parent: this, predicate })
+  }
+
   abortIfUndef(): any {
-    return new _Updater({ type: 'abortIfUndef', parent: this })
+    return this.abortIfNot((value: any) => value !== undefined)
   }
 
   findBoundTarget() {
@@ -227,13 +252,11 @@ class _Updater {
       return { host: newHost, field: newField }
     }
 
-    const value = previousHost[field]
-
-    if (this.data.type === 'abortIfUndef' && value === undefined) {
+    if (this.data.type === 'abortIfNot' && this.data.predicate(host) === false) {
       return { host, field, aborted: true }
     }
 
-    if (this.data.type === 'withDefault' && value === undefined) {
+    if (this.data.type === 'withDefault' && previousHost[field] === undefined) {
       const nextValue = this.data.defaultValue
       const newHost = isLast ? previousHost : nextValue
       previousHost[field] = nextValue
@@ -290,8 +313,8 @@ function clone(obj: any): any {
   return cloned
 }
 
-export function deepUpdate<O extends object>(target: O): BoundAtUpdater<O, O>
-export function deepUpdate<O extends object>(): AtUpdater<O, O>
+export function deepUpdate<TARGET extends object>(target: TARGET): BoundAtUpdater<TARGET, TARGET>
+export function deepUpdate<TARGET extends object>(): AtUpdater<TARGET, TARGET>
 export function deepUpdate(target?: any): any {
   return new _Updater({ type: 'root', boundTarget: target })
 }
