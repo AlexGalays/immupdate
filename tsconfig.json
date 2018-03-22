@@ -7,5 +7,5 @@
     "noUnusedParameters": true
   },
   "compileOnSave": false,
-  "filesGlob": ["immupdate.ts", "test/**/*.ts"]
+  "include": ["immupdate.ts", "test/**/*.ts"]
 }

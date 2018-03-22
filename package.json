@@ -1,6 +1,6 @@
 {
   "name": "immupdate",
-  "version": "1.1.7",
+  "version": "1.2.0",
   "description": "Immutable update for Objects and Arrays",
   "license": "MIT",
 
@@ -9,7 +9,7 @@
   "typings": "commonjs/immupdate.d.ts",
 
   "devDependencies": {
-    "typescript": "2.6.1",
+    "typescript": "next",
     "mocha": "2.2.5",
     "expect": "1.8.0",
     "chalk": "1.1.1"

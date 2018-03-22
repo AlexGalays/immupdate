@@ -91,6 +91,12 @@ deepUpdate<{ kiki: { koko: number } }>()
   .at('koko')
   .at('toExponential')
 
+// Chaining a nested Function @shouldNotCompile
+deepUpdate<{ kiki: { koko: () => number } }>()
+  .at('kiki')
+  .at('koko')
+  .at('bind')
+
 // Updating an Array with a string key instead of an index @shouldNotCompile
 deepUpdate<number[]>()
   .at('join')

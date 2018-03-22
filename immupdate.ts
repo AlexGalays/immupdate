@@ -28,46 +28,59 @@ export function update<Obj extends {}, K extends keyof Obj>(host: Obj, spec: Pic
 export const DELETE = {} as any as undefined
 
 
-
 //--------------------------------------
 //  Deep update
 //--------------------------------------
 
-export type ObjectLiteral = object & { reduceRight?: 'nope' }
+
+export type Leaf = string | number | boolean | null | symbol | Date | Function
+
+export type AtUpdater<TARGET, CURRENT> =
+  [CURRENT] extends [any[]] ? ArrayAtUpdater<TARGET, CURRENT> : ObjectAtUpdater<TARGET, CURRENT>
+
+export type BoundAtUpdater<TARGET, CURRENT> =
+  [CURRENT] extends [any[]] ? ArrayBoundAtUpdater<TARGET, CURRENT> : ObjectBoundAtUpdater<TARGET, CURRENT>
+
+export type Updater<TARGET, CURRENT> =
+  [CURRENT] extends [any[]] ? ArrayUpdater<TARGET, CURRENT> :
+  [CURRENT] extends [Leaf] ? AnySetter<TARGET, CURRENT> : ObjectUpdater<TARGET, CURRENT>
+
+export type BoundUpdater<TARGET, CURRENT> =
+  [CURRENT] extends [any[]] ? ArrayBoundUpdater<TARGET, CURRENT> :
+  [CURRENT] extends [Leaf] ? AnyBoundSetter<TARGET, CURRENT> : ObjectBoundUpdater<TARGET, CURRENT>
 
 
-export interface AtUpdater<TARGET, CURRENT> {
-  __T: [TARGET, CURRENT] // Strengthen structural typing
-
-  /**
-   * Selects this Object key for update or further at() chaining
-   */
-  at<K extends keyof CURRENT>(this: AtUpdater<TARGET, ObjectLiteral>, key: K): Updater<TARGET, CURRENT[K]>
-
+export interface ArrayAtUpdater<TARGET, CURRENT> {
   /**
    * Selects an Array index for update or further at() chaining
    */
-  at<A>(this: AtUpdater<TARGET, A[]>, index: number): Updater<TARGET, A | undefined>
+  at(index: number): Updater<TARGET, [CURRENT] extends [any[]] ? CURRENT[number & keyof CURRENT] | undefined : never>
+}
+
+export interface ObjectAtUpdater<TARGET, CURRENT> {
+  /**
+   * Selects this Object key for update or further at() chaining
+   */
+  at<K extends keyof CURRENT>(key: K): Updater<TARGET, CURRENT[K]>
 }
 
 // The at interface carrying a pre-bound value
-export interface BoundAtUpdater<TARGET, CURRENT> {
-  __T: [TARGET, CURRENT]
-
-  /**
-   * Selects this Object key for update or further at() chaining
-   */
-  at<K extends keyof CURRENT>(this: BoundAtUpdater<TARGET, ObjectLiteral>, key: K): BoundUpdater<TARGET, CURRENT[K]>
-
+export interface ArrayBoundAtUpdater<TARGET, CURRENT> {
   /**
    * Selects an Array index for update or further at() chaining
    */
-  at<A>(this: BoundAtUpdater<TARGET, A[]>, index: number): BoundUpdater<TARGET, A | undefined>
+  at(index: number): BoundUpdater<TARGET, [CURRENT] extends [any[]] ? CURRENT[number & keyof CURRENT] | undefined : never>
 }
 
-export interface Updater<TARGET, CURRENT> extends AtUpdater<TARGET, CURRENT> {
-  __T: [TARGET, CURRENT]
+// The at interface carrying a pre-bound value
+export interface ObjectBoundAtUpdater<TARGET, CURRENT> {
+  /**
+   * Selects this Object key for update or further at() chaining
+   */
+  at<K extends keyof CURRENT>(key: K): BoundUpdater<TARGET, CURRENT[K]>
+}
 
+export interface AnySetter<TARGET, CURRENT> {
   /**
    * Sets the value at the currently selected path.
    */
@@ -77,21 +90,23 @@ export interface Updater<TARGET, CURRENT> extends AtUpdater<TARGET, CURRENT> {
    * Modifies the value at the specified path. The current value is passed.
    */
   modify(modifier: (value: CURRENT) => CURRENT): (target: TARGET) => TARGET
+}
 
+export interface AnyUpdater<TARGET, CURRENT> extends AnySetter<TARGET, CURRENT> {
   /**
    * Makes the previous nullable chain level 'safe' by using a default value
    */
-  withDefault<B, C extends B>(this: Updater<TARGET, B | undefined>, defaultValue: C): Updater<TARGET, B>
+  withDefault(defaultValue: CURRENT): Updater<TARGET, NonNullable<CURRENT>>
 
   /**
    * Aborts the whole update operation if the previous chain level is null or undefined.
    */
-  abortIfUndef<B>(this: Updater<TARGET, B | undefined>): Updater<TARGET, B>
+  abortIfUndef(): Updater<TARGET, NonNullable<CURRENT>>
 
   /**
    * Aborts the whole update operation if the previous chain level doesn't verify a type guard
    */
-  abortIfNot<C extends CURRENT>(predicate: (value: CURRENT) => value is C): Updater<TARGET, C>
+  abortIfNot<B extends CURRENT>(predicate: (value: CURRENT) => value is B): Updater<TARGET, B>
 
   /**
    * Aborts the whole update operation if the previous chain level doesn't verify a predicate
@@ -99,9 +114,11 @@ export interface Updater<TARGET, CURRENT> extends AtUpdater<TARGET, CURRENT> {
   abortIfNot(predicate: (value: CURRENT) => boolean): Updater<TARGET, CURRENT>
 }
 
-export interface BoundUpdater<TARGET, CURRENT> extends BoundAtUpdater<TARGET, CURRENT> {
-  __T: [TARGET, CURRENT]
+export interface ArrayUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURRENT>, ArrayAtUpdater<TARGET, CURRENT> {}
+export interface ObjectUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURRENT>, ObjectAtUpdater<TARGET, CURRENT> {}
 
+
+export interface AnyBoundSetter<TARGET, CURRENT> {
   /**
    * Sets the value at the currently selected path.
    */
@@ -111,27 +128,33 @@ export interface BoundUpdater<TARGET, CURRENT> extends BoundAtUpdater<TARGET, CU
    * Modifies the value at the specified path. The current value is passed.
    */
   modify(modifier: (value: CURRENT) => CURRENT): TARGET
+}
 
+export interface AnyBoundUpdater<TARGET, CURRENT> extends AnyBoundSetter<TARGET, CURRENT> {
   /**
    * Makes the previous nullable chain level 'safe' by using a default value
    */
-  withDefault<B, C extends B>(this: BoundUpdater<TARGET, B | undefined>, defaultValue: C): BoundUpdater<TARGET, B>
+  withDefault(defaultValue: CURRENT): BoundUpdater<TARGET, NonNullable<CURRENT>>
 
   /**
    * Aborts the whole update operation if the previous chain level is null or undefined.
    */
-  abortIfUndef<B>(this: BoundUpdater<TARGET, B | undefined>): BoundUpdater<TARGET, B>
+  abortIfUndef(): BoundUpdater<TARGET, NonNullable<CURRENT>>
 
   /**
    * Aborts the whole update operation if the previous chain level doesn't verify a type guard
    */
-  abortIfNot<C extends CURRENT>(predicate: (value: CURRENT) => value is C): BoundUpdater<TARGET, C>
+  abortIfNot<B extends CURRENT>(predicate: (value: CURRENT) => value is B): BoundUpdater<TARGET, B>
 
   /**
    * Aborts the whole update operation if the previous chain level doesn't verify a predicate
    */
   abortIfNot(predicate: (value: CURRENT) => boolean): BoundUpdater<TARGET, CURRENT>
 }
+
+export interface ArrayBoundUpdater<TARGET, CURRENT> extends AnyBoundUpdater<TARGET, CURRENT>, ArrayBoundAtUpdater<TARGET, CURRENT> {}
+export interface ObjectBoundUpdater<TARGET, CURRENT> extends AnyBoundUpdater<TARGET, CURRENT>, ObjectBoundAtUpdater<TARGET, CURRENT> {}
+
 
 
 interface Root {
