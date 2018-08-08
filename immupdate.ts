@@ -35,12 +35,6 @@ export const DELETE = {} as any as undefined
 
 export type Leaf = string | number | boolean | null | symbol | Date | Function
 
-export type AtUpdater<TARGET, CURRENT> =
-  [CURRENT] extends [any[]] ? ArrayAtUpdater<TARGET, CURRENT> : ObjectAtUpdater<TARGET, CURRENT>
-
-export type BoundAtUpdater<TARGET, CURRENT> =
-  [CURRENT] extends [any[]] ? ArrayBoundAtUpdater<TARGET, CURRENT> : ObjectBoundAtUpdater<TARGET, CURRENT>
-
 export type Updater<TARGET, CURRENT> =
   [CURRENT] extends [any[]] ? ArrayUpdater<TARGET, CURRENT> :
   [CURRENT] extends [Leaf] ? AnySetter<TARGET, CURRENT> : ObjectUpdater<TARGET, CURRENT>
@@ -336,8 +330,12 @@ function clone(obj: any): any {
   return cloned
 }
 
-export function deepUpdate<TARGET extends object>(target: TARGET): BoundAtUpdater<TARGET, TARGET>
-export function deepUpdate<TARGET extends object>(): AtUpdater<TARGET, TARGET>
+export function deepUpdate<TARGET extends any[]>(target: TARGET): ArrayBoundAtUpdater<TARGET, TARGET>
+export function deepUpdate<TARGET extends object>(target: TARGET): ObjectBoundAtUpdater<TARGET, TARGET>
+export function deepUpdate<TARGET extends any[]>(): ArrayAtUpdater<TARGET, TARGET>
+export function deepUpdate<TARGET extends object>(): ObjectAtUpdater<TARGET, TARGET>
+
+
 export function deepUpdate(target?: any): any {
   return new _Updater({ type: 'root', boundTarget: target })
 }

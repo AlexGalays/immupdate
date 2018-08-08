@@ -52,6 +52,13 @@ describe('immupdate', () => {
       expect(obj).toEqual({ a: 33, b: 44 })
     })
 
+    // it('can work with a generic key/value', () => {
+    //   // Doesn't work right now thanks to TS dreaded string widening
+    //   function genericUpdate<T, K extends keyof T>(host: T, key: K, value: T[K]): T {
+    //     return update(host, { [key]: value })
+    //   }
+    // })
+
   })
 
 
@@ -585,6 +592,62 @@ describe('immupdate', () => {
         ]
       })
 
+    })
+
+    it('can work with a real life example 2', () => {
+
+      class Form<T extends object> {
+        constructor(values: T) {
+          this.values = values
+        }
+
+        values: T
+
+        handleChange<K extends keyof T>(field: K, value: T[K]): void {
+          const newValues = deepUpdate(this.values)
+            .at(field)
+            .set(value)
+
+          this.values = newValues
+        }
+
+        // Given each level cannot guarantee there is an at() function available, this cannot easily compile 
+        // handleChange2<K extends keyof T, K2 extends keyof T[K]>(field: K, field2: K2, value: T[K][K2]): void {
+        //   const newValues = deepUpdate(this.values)
+        //     .at(field)
+        //     .at(field2)
+        //     .set(value)
+
+        //   this.values = newValues
+        // }
+      }
+
+      interface Person {
+        name: string
+        age: number
+        coolness: 'rad' | 'weak'
+        nested: { data: number }
+      }
+
+      const personForm = new Form<Person>({
+        name: 'Jake',
+        age: 29,
+        coolness: 'rad',
+        nested: {
+          data: 12
+        }
+      })
+
+      personForm.handleChange('age', 65) // should work
+      personForm.handleChange('coolness', 'weak') // should work
+
+      //personForm.handleChange('age', '65') // should not compile
+      //personForm.handleChange('coolness', 'lame') // should not compile
+
+      //personForm.handleChange2('nested', 'data', 20) // should work
+
+      //personForm.handleChange2('nested', 'data', '20') // should not compile
+      //personForm.handleChange2('nested', 'data2', '20') // should not compile
     })
 
     it('can delete a deep optional property', () => {
