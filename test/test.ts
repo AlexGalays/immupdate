@@ -13,6 +13,18 @@ describe('immupdate', () => {
       expect(result).toNotBe(obj)
     })
 
+    it('should return original object on update with same value', () => {
+      const obj: { a: number } = { a: 33 }
+      const result = update(obj, { a: 33 })
+      expect(result).toBe(obj)
+    })
+
+    it('should return original object on removal of not set value', () => {
+      const obj: { a?: number } = {}
+      const result = update(obj, { a: DELETE })
+      expect(result).toBe(obj)
+    })
+
     it('can update a primitive key', () => {
       const result = update({ a: 33 }, { a: 44 })
       expect(result).toEqual({ a: 44 })
@@ -695,7 +707,7 @@ describe('immupdate', () => {
       })
 
       const obj2: Obj = { a: { version: 1, data: '001' } }
-      
+
       const updated2 = deepUpdate(obj2)
         .at('a')
         .abortIfUndef()
