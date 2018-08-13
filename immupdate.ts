@@ -7,19 +7,22 @@
 /** Performs a shallow update of an object using a partial object of the same shape. A new object is returned. */
 export function update<Obj extends {}, K extends keyof Obj>(host: Obj, spec: Pick<Obj, K>): Obj {
   const result = clone(host)
+  let hasChanged = false;
 
   for (let key in spec) {
     const specValue = spec[key]
 
     if (specValue === DELETE) {
       delete result[key]
+      hasChanged = hasChanged || key in host;
     }
     else {
       result[key] = specValue
+      hasChanged = hasChanged || host[key] !== specValue;
     }
   }
 
-  return result
+  return hasChanged ? result : host;
 }
 
 
