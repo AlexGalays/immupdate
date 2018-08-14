@@ -710,8 +710,6 @@ describe('immupdate', () => {
         .modify(s => s && 'hey')
 
       expect(updated2).toEqual({ a: { b: undefined } })
-      expect(updated2).toNotBe(obj1)
-
 
       const obj2: Obj = { a: { b: 'aaa' } }
 
@@ -801,6 +799,30 @@ describe('immupdate', () => {
       expect(updated).toEqual({
         u: { type: 'a', data: 20 }
       })
+    })
+
+    it('should return original object on set() with same value', () => {
+      const obj = { a: { b: { c: 10 } } }
+      const result = deepUpdate(obj).at('a').at('b').at('c').set(10)
+      expect(result).toBe(obj)
+    })
+
+    it('should return original object on modify() with same value', () => {
+      const obj = { a: { b: { c: 10 } } }
+      const result = deepUpdate(obj).at('a').at('b').at('c').modify(v => v)
+      expect(result).toBe(obj)
+    })
+
+    it('should return original object on set() with same value but with a withDefault() that was used', () => {
+      const obj: { a: { b?: { c: number } } } = { a: {} }
+      const result = deepUpdate(obj).at('a').at('b').withDefault({ c: 10 }).at('c').set(10)
+      expect(result).toNotBe(obj)
+    })
+
+    it('should not return original object on set() with same value but with a withDefault() that was actually used', () => {
+      const obj: { a: { b?: { c: number } } } = { a: { b: { c: 10 } } }
+      const result = deepUpdate(obj).at('a').at('b').withDefault({ c: 10 }).at('c').set(10)
+      expect(result).toBe(obj)
     })
 
   })

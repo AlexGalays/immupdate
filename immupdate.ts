@@ -189,22 +189,7 @@ class _Updater {
   }
 
   set(value: any) {
-    const doSet = (target: any) => {
-
-      const result = this.cloneForUpdate(target)
-      if (result.name === 'aborted') return target
-
-      const { clonedTarget, leafHost, field } = result
-
-      value === DELETE ? delete leafHost[field] : leafHost[field] = value
-      return clonedTarget
-    }
-
-    const boundTarget = this.findBoundTarget()
-
-    return boundTarget
-      ? doSet(boundTarget)
-      : doSet
+    return this.modify(_ => value)
   }
 
   modify<V>(modifier: (value: V) => V) {
@@ -213,12 +198,23 @@ class _Updater {
       const result = this.cloneForUpdate(target)
       if (result.name === 'aborted') return target
 
-      const { clonedTarget, leafHost, field } = result
+      const { clonedTarget, leafHost, field, structurallyModified } = result
 
-      const value = modifier(leafHost[field])
+      const currentValue = leafHost[field]
+      const value = modifier(currentValue)
 
-      value === DELETE ? delete leafHost[field] : leafHost[field] = value
-      return clonedTarget
+      let changed = structurallyModified
+
+      if (value === DELETE) {
+        if (field in leafHost) changed = true
+        delete leafHost[field]
+      }
+      else {
+        if (currentValue !== value) changed = true
+        leafHost[field] = value
+      }
+
+      return changed ? clonedTarget : target
     }
 
     const boundTarget = this.findBoundTarget()
@@ -280,20 +276,21 @@ class _Updater {
       const nextValue = this.data.defaultValue
       const newHost = isLast ? previousHost : nextValue
       previousHost[field] = nextValue
-      return { host: newHost, field }
+      return { host: newHost, field, structurallyModified: true }
     }
 
     const newHost = isLast ? previousHost : host
     return { host: newHost, field }
   }
 
-  cloneForUpdate(target: any): { name: 'aborted' } | { name: 'result', clonedTarget: any, leafHost: any, field: any } {
+  cloneForUpdate(target: any): { name: 'aborted' } | { name: 'result', clonedTarget: any, leafHost: any, field: any, structurallyModified: boolean } {
     const updaters = this.parentUpdaters()
     const obj = clone(target)
 
     let previousHost = obj
     let host = obj
     let field: string | number = ''
+    let structurallyModified = false
 
     for (let i = 0; i < updaters.length; i++) {
 
@@ -307,6 +304,7 @@ class _Updater {
       if (result.aborted)
         return { name: 'aborted' }
 
+      structurallyModified = structurallyModified || result.structurallyModified
       previousHost = host
       host = result.host
       field = result.field
@@ -316,7 +314,8 @@ class _Updater {
       name: 'result',
       clonedTarget: obj,
       leafHost: host,
-      field
+      field,
+      structurallyModified
     }
   }
 }
