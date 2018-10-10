@@ -123,22 +123,14 @@ describe('immupdate', () => {
           favoriteColor: 'blue'
         }
       } ])
-
-      // value-last notation
-      const result2 = deepUpdate<Array<Person | number>>()
-        .at(2)
-        .set(person)([1, 2])
-
-      expect(result2).toEqual([ 1, 2, person ])
-      expect(result2[2]).toBe(person)
     })
 
     it('can update a nested Array', () => {
-      const result = deepUpdate<Person>()
+      const result = deepUpdate(person)
         .at('contact')
         .at('phoneNumbers')
         .at(0)
-        .set('06123456')(person)
+        .set('06123456')
 
       expect(result).toEqual({
         id: '44',
@@ -160,12 +152,7 @@ describe('immupdate', () => {
     })
 
     it('can update a nested field', () => {
-      const result = deepUpdate<Person>()
-        .at('contact')
-        .at('email')
-        .set('tarzan@gmail.com')(person)
-
-      const result2 = deepUpdate(person)
+      const result = deepUpdate(person)
         .at('contact')
         .at('email')
         .set('tarzan@gmail.com')
@@ -182,7 +169,6 @@ describe('immupdate', () => {
       }
 
       expect(result).toEqual(expected)
-      expect(result2).toEqual(expected)
     })
 
     it('can update a missing Array index with a default element', () => {
@@ -193,14 +179,7 @@ describe('immupdate', () => {
         ]
       }
 
-      const result = deepUpdate<typeof target>()
-        .at('items')
-        .at(2)
-        .withDefault({ a: 100, b: 0 })
-        .at('b')
-        .set(1000)(target)
-
-      const result2 = deepUpdate(target)
+      const result = deepUpdate(target)
         .at('items')
         .at(2)
         .withDefault({ a: 100, b: 0 })
@@ -215,9 +194,8 @@ describe('immupdate', () => {
         ]
       }
 
+      expect(result).toNotBe(expected)
       expect(result).toEqual(expected)
-      expect(result2).toEqual(expected)
-      expect(result2).toNotBe(target)
     })
 
     it('can abort an update to a missing Array index', () => {
@@ -228,14 +206,7 @@ describe('immupdate', () => {
         ]
       }
 
-      const result = deepUpdate<typeof target>()
-        .at('items')
-        .at(2)
-        .abortIfUndef()
-        .at('b')
-        .set(1000)(target)
-
-      const result2 = deepUpdate(target)
+      const result = deepUpdate(target)
         .at('items')
         .at(2)
         .abortIfUndef()
@@ -243,7 +214,6 @@ describe('immupdate', () => {
         .set(1000)
 
       expect(result).toEqual(target)
-      expect(result2).toEqual(target)
     })
 
     it('can update a field with a DEFINED nullable higher up in the path', () => {
@@ -257,11 +227,11 @@ describe('immupdate', () => {
         customData: { favoriteColor: 'green' }
       }
 
-      const result = deepUpdate<Person>()
+      const result = deepUpdate(personWithPrefs)
         .at('prefs')
         .withDefault(defaultPrefs)
         .at('csvSeparator')
-        .set(',')(personWithPrefs)
+        .set(',')
 
       expect(result).toEqual({
         id: '44',
@@ -280,11 +250,11 @@ describe('immupdate', () => {
     })
 
     it('can update a field with an UNDEFINED nullable higher up in the path', () => {
-      const result = deepUpdate<Person>()
+      const result = deepUpdate(person)
         .at('prefs')
         .withDefault(defaultPrefs)
         .at('csvSeparator')
-        .set(',')(person)
+        .set(',')
 
       expect(result).toEqual({
         id: '44',
@@ -304,12 +274,7 @@ describe('immupdate', () => {
 
     it('can modify a value', () => {
 
-      const result = deepUpdate<Person>()
-        .at('contact')
-        .at('email')
-        .modify(email => `${email}xx`)(person)
-
-      const result2 = deepUpdate(person)
+      const result = deepUpdate(person)
         .at('contact')
         .at('email')
         .modify(email => `${email}xx`)
@@ -324,10 +289,8 @@ describe('immupdate', () => {
       }
 
       expect(result).toEqual(expected)
-      expect(result2).toEqual(expected)
 
       expect(result.contact).toNotBe(person.contact)
-      expect(result2.contact).toNotBe(person.contact)
       expect(result.prefs).toBe(person.prefs)
     })
 
@@ -478,39 +441,6 @@ describe('immupdate', () => {
       expect(updated).toEqual({
         a: { b: ['bye', ':)'] }
       })
-    })
-
-    it('can create a structure ready to be reused for multiple updates', () => {
-
-      // setup code
-      const Person = (() => {
-        const p = deepUpdate<Person>()
-        const contact = p.at('contact')
-        const email = contact.at('email')
-        const phoneNumbers = contact.at('phoneNumbers')
-
-        return {
-          contact: {
-            $: contact,
-            email,
-            phoneNumbers
-          }
-        }
-      })()
-
-      const p1 = Person.contact.email.set('coco@gmail.com')(person)
-      const p2 = Person.contact.phoneNumbers.at(1).set('0202')(p1)
-      const p3 = Person.contact.phoneNumbers.at(0).set('0101')(p2)
-
-      expect(p3).toEqual({
-        id: '44',
-        contact: {
-          email: 'coco@gmail.com',
-          phoneNumbers: ['0101', '0202']
-        },
-        customData: { favoriteColor: 'blue' }
-      })
-
     })
 
     it('works with a real life example', () => {

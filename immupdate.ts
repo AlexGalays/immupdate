@@ -38,13 +38,10 @@ export const DELETE = {} as any as undefined
 
 export type Leaf = string | number | boolean | null | symbol | Date | Function
 
+
 export type Updater<TARGET, CURRENT> =
   [CURRENT] extends [any[]] ? ArrayUpdater<TARGET, CURRENT> :
   [CURRENT] extends [Leaf] ? AnySetter<TARGET, CURRENT> : ObjectUpdater<TARGET, CURRENT>
-
-export type BoundUpdater<TARGET, CURRENT> =
-  [CURRENT] extends [any[]] ? ArrayBoundUpdater<TARGET, CURRENT> :
-  [CURRENT] extends [Leaf] ? AnyBoundSetter<TARGET, CURRENT> : ObjectBoundUpdater<TARGET, CURRENT>
 
 
 export interface ArrayAtUpdater<TARGET, CURRENT> {
@@ -61,32 +58,17 @@ export interface ObjectAtUpdater<TARGET, CURRENT> {
   at<K extends keyof CURRENT>(key: K): Updater<TARGET, CURRENT[K]>
 }
 
-// The at interface carrying a pre-bound value
-export interface ArrayBoundAtUpdater<TARGET, CURRENT> {
-  /**
-   * Selects an Array index for update or further at() chaining
-   */
-  at(index: number): BoundUpdater<TARGET, [CURRENT] extends [any[]] ? CURRENT[number & keyof CURRENT] | undefined : never>
-}
-
-// The at interface carrying a pre-bound value
-export interface ObjectBoundAtUpdater<TARGET, CURRENT> {
-  /**
-   * Selects this Object key for update or further at() chaining
-   */
-  at<K extends keyof CURRENT>(key: K): BoundUpdater<TARGET, CURRENT[K]>
-}
 
 export interface AnySetter<TARGET, CURRENT> {
   /**
    * Sets the value at the currently selected path.
    */
-  set(value: CURRENT): (target: TARGET) => TARGET
+  set(value: CURRENT): TARGET
 
   /**
    * Modifies the value at the specified path. The current value is passed.
    */
-  modify(modifier: (value: CURRENT) => CURRENT): (target: TARGET) => TARGET
+  modify(modifier: (value: CURRENT) => CURRENT): TARGET
 }
 
 export interface AnyUpdater<TARGET, CURRENT> extends AnySetter<TARGET, CURRENT> {
@@ -113,44 +95,6 @@ export interface AnyUpdater<TARGET, CURRENT> extends AnySetter<TARGET, CURRENT> 
 
 export interface ArrayUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURRENT>, ArrayAtUpdater<TARGET, CURRENT> {}
 export interface ObjectUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURRENT>, ObjectAtUpdater<TARGET, CURRENT> {}
-
-
-export interface AnyBoundSetter<TARGET, CURRENT> {
-  /**
-   * Sets the value at the currently selected path.
-   */
-  set(value: CURRENT): TARGET
-
-  /**
-   * Modifies the value at the specified path. The current value is passed.
-   */
-  modify(modifier: (value: CURRENT) => CURRENT): TARGET
-}
-
-export interface AnyBoundUpdater<TARGET, CURRENT> extends AnyBoundSetter<TARGET, CURRENT> {
-  /**
-   * Makes the previous nullable chain level 'safe' by using a default value
-   */
-  withDefault(defaultValue: CURRENT): BoundUpdater<TARGET, NonNullable<CURRENT>>
-
-  /**
-   * Aborts the whole update operation if the previous chain level is null or undefined.
-   */
-  abortIfUndef(): BoundUpdater<TARGET, NonNullable<CURRENT>>
-
-  /**
-   * Aborts the whole update operation if the previous chain level doesn't verify a type guard
-   */
-  abortIfNot<B extends CURRENT>(predicate: (value: CURRENT) => value is B): BoundUpdater<TARGET, B>
-
-  /**
-   * Aborts the whole update operation if the previous chain level doesn't verify a predicate
-   */
-  abortIfNot(predicate: (value: CURRENT) => boolean): BoundUpdater<TARGET, CURRENT>
-}
-
-export interface ArrayBoundUpdater<TARGET, CURRENT> extends AnyBoundUpdater<TARGET, CURRENT>, ArrayBoundAtUpdater<TARGET, CURRENT> {}
-export interface ObjectBoundUpdater<TARGET, CURRENT> extends AnyBoundUpdater<TARGET, CURRENT>, ObjectBoundAtUpdater<TARGET, CURRENT> {}
 
 
 
@@ -332,11 +276,8 @@ function clone(obj: any): any {
   return cloned
 }
 
-export function deepUpdate<TARGET extends any[]>(target: TARGET): ArrayBoundAtUpdater<TARGET, TARGET>
-export function deepUpdate<TARGET extends object>(target: TARGET): ObjectBoundAtUpdater<TARGET, TARGET>
-export function deepUpdate<TARGET extends any[]>(): ArrayAtUpdater<TARGET, TARGET>
-export function deepUpdate<TARGET extends object>(): ObjectAtUpdater<TARGET, TARGET>
-
+export function deepUpdate<TARGET extends any[]>(target: TARGET): ArrayAtUpdater<TARGET, TARGET>
+export function deepUpdate<TARGET extends object>(target: TARGET): ObjectAtUpdater<TARGET, TARGET>
 
 export function deepUpdate(target?: any): any {
   return new _Updater({ type: 'root', boundTarget: target })

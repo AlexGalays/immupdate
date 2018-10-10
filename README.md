@@ -14,7 +14,6 @@ This library only does simple updates (e.g setting, modifying or deleting a valu
   * [Update a nested property using its current value](#update-nested-property-modify)
   * [Update a nested property on a nullable path](#update-nested-nullable-property)
   * [Update a nested union property](#update-nested-union-property)
-  * [Reuse a nested updater](#reuse-nested-updater)
 
 
 <a name="intro"></a>
@@ -265,36 +264,4 @@ deepUpdate(container)
   .abortIfNot(isA)
   .at('data')
   .set('bb')
-```
-
-<a name="reuse-nested-updater"></a>
-## Reuse a nested updater
-
-All the above examples used an ad-hoc style: The updater structure is created from scratch everytime we want to update something.  
-
-We can instead decide to reuse the structure for all updates (like when using lenses, only we're just using the write side), if you believe the boilerplate pays off:  
-
-```ts
-import { deepUpdate } from 'immupdate'
-
-// Setup code
-
-const Person = (() => {
-  const p = deepUpdate<Person>()
-  const contact = p.at('contact')
-  const email = contact.at('email')
-  const phoneNumbers = contact.at('phoneNumbers')
-
-  return {
-    contact: {
-      $: contact, // $ is just a convention meaning: "The updater found at the current branch"
-      email,
-      phoneNumbers
-    }
-  }
-})()
-
-// Then later:
-
-const updatedPerson = Person.contact.email.set('coco@gmail.com')(person)
 ```

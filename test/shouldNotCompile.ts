@@ -1,6 +1,5 @@
-
 import { update, DELETE, deepUpdate } from '../'
-
+import { Option } from 'space-lift'
 
 //--------------------------------------
 //  Update
@@ -80,11 +79,6 @@ deepUpdate<number>()
 // Trying to update the root @shouldNotCompile
 deepUpdate<{}>().set({})({})
 
-// update with the wrong target type @shouldNotCompile
-deepUpdate<{ a: number }>()
-  .at('a')
-  .set(10)({ b: 1 })
-
 // Chaining a nested primitive @shouldNotCompile
 deepUpdate<{ kiki: { koko: number } }>()
   .at('kiki')
@@ -98,14 +92,14 @@ deepUpdate<{ kiki: { koko: () => number } }>()
   .at('bind')
 
 // Updating an Array with a string key instead of an index @shouldNotCompile
-deepUpdate<number[]>()
+deepUpdate([])
   .at('join')
-  .set(3)([])
+  .set(3)
 
 // Updating an Object with a number key instead of a string @shouldNotCompile
-deepUpdate<{ hello: number }>()
+deepUpdate({ hello: 10 })
   .at(10)
-  .set(3)({ hello: 10 })
+  .set(3)
 
 // Updating an Object with a nullable path in the middle @shouldNotCompile
 deepUpdate<{ hello?: { hi: number } }>()
