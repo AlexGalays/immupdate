@@ -270,7 +270,7 @@ deepUpdate(container)
 <a name="update-option"></a>
 ## Update a space-lift Option
 
-Additionally, if you're also using [space-lift](https://github.com/AlexGalays/spacelift), you can update Option values anywhere in a tree. Updating a `Option<T>` work exactly like a updating `T | undefined` normally would so you still have to explicitely tell `deepUpdate` what to do in case it encounters a `None`:  
+Additionally, if you're also using [space-lift](https://github.com/AlexGalays/spacelift), you can update Option values anywhere in a tree. Updating an `Option<T>` works exactly like updating a `T | undefined`, so you still have to explicitly tell `deepUpdate` what to do in case it encounters a `None`.  
 
 ```ts
 const obj = {
