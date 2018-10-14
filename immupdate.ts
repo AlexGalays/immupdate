@@ -190,7 +190,7 @@ class _Updater {
   }
 
   withDefault(value: any): any {
-    return new _Updater({ type: 'withDefault', parent: this, defaultValue: value })
+    return new _Updater({ type: 'withDefault', parent: this, defaultValue: clone(value) })
   }
 
   abortIfNot(predicate: any): any {

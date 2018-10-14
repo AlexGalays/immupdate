@@ -117,6 +117,23 @@ describe('immupdate', () => {
     })
 
     
+    it('does not mutate a passed defaultValue', () => {
+      const obj = {
+        a: '',
+        b: undefined as { c: string } | undefined
+      }
+
+      const defaultValue = { c: 'defaultC' }
+
+      deepUpdate(obj)
+        .at('b')
+        .withDefault(defaultValue)
+        .at('c')
+        .set('newC')
+
+      expect(defaultValue.c).toBe('defaultC')
+    })
+
     it('can update a root Array', () => {
       // regular notation
       const result = deepUpdate([person, person, person])
