@@ -14,6 +14,7 @@ This library only does simple updates (e.g setting, modifying or deleting a valu
   * [Update a nested property using its current value](#update-nested-property-modify)
   * [Update a nested property on a nullable path](#update-nested-nullable-property)
   * [Update a nested union property](#update-nested-union-property)
+  * [Update a space-lift Option](#update-option)
 
 
 <a name="intro"></a>
@@ -53,7 +54,7 @@ import { update, deepUpdate, DELETE } from 'immupdate'
 
 `update` updates the shallow properties of an object  
 `deepUpdate` can update one arbitrarily nested property in a JSON tree  
-`DELETE` is a marker used with `update` to delete a property  
+`DELETE` is a special marker used with `update` and `immupdate` to delete a property  
 
 # Examples
 
@@ -264,4 +265,26 @@ deepUpdate(container)
   .abortIfNot(isA)
   .at('data')
   .set('bb')
+```
+
+<a name="update-option"></a>
+## Update a space-lift Option
+
+Additionally, if you're also using [space-lift](https://github.com/AlexGalays/spacelift), you can update Option values anywhere in a tree. Updating a `Option<T>` work exactly like a updating `T | undefined` normally would so you still have to explicitely tell `deepUpdate` what to do in case it encounters a `None`:  
+
+```ts
+const obj = {
+  a: Some({
+    b: Some({ c: 1 }),
+    x: { y: 'y' }
+  })
+}
+
+const result = deepUpdate(obj)
+  .at('a')
+  .abortIfUndef()
+  .at('b')
+  .withDefault({ c: 5 })
+  .at('c')
+  .set(10)
 ```

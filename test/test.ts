@@ -1,4 +1,5 @@
 import { update, DELETE, deepUpdate } from '../'
+import { Option, Some, None } from 'space-lift'
 
 const expect = require('expect')
 
@@ -104,6 +105,18 @@ describe('immupdate', () => {
       }
     }
 
+    it('can update a value at the first level', () => {
+      type NullableObj = { a: number } | undefined
+
+      const obj = { a: 1 }
+      const result = deepUpdate<NullableObj>(obj)
+        .set({ a: 10 })
+
+      expect(result).toNotBe(obj)
+      expect(result).toEqual({ a: 10 })
+    })
+
+    
     it('can update a root Array', () => {
       // regular notation
       const result = deepUpdate([person, person, person])
@@ -179,10 +192,12 @@ describe('immupdate', () => {
         ]
       }
 
+      const defaultValue = { a: 100, b: 0 }
+
       const result = deepUpdate(target)
         .at('items')
         .at(2)
-        .withDefault({ a: 100, b: 0 })
+        .withDefault(defaultValue)
         .at('b')
         .set(1000)
 
@@ -536,62 +551,6 @@ describe('immupdate', () => {
 
     })
 
-    it('can work with a real life example 2', () => {
-
-      class Form<T extends object> {
-        constructor(values: T) {
-          this.values = values
-        }
-
-        values: T
-
-        handleChange<K extends keyof T>(field: K, value: T[K]): void {
-          const newValues = deepUpdate(this.values)
-            .at(field)
-            .set(value)
-
-          this.values = newValues
-        }
-
-        // Given each level cannot guarantee there is an at() function available, this cannot easily compile 
-        // handleChange2<K extends keyof T, K2 extends keyof T[K]>(field: K, field2: K2, value: T[K][K2]): void {
-        //   const newValues = deepUpdate(this.values)
-        //     .at(field)
-        //     .at(field2)
-        //     .set(value)
-
-        //   this.values = newValues
-        // }
-      }
-
-      interface Person {
-        name: string
-        age: number
-        coolness: 'rad' | 'weak'
-        nested: { data: number }
-      }
-
-      const personForm = new Form<Person>({
-        name: 'Jake',
-        age: 29,
-        coolness: 'rad',
-        nested: {
-          data: 12
-        }
-      })
-
-      personForm.handleChange('age', 65) // should work
-      personForm.handleChange('coolness', 'weak') // should work
-
-      //personForm.handleChange('age', '65') // should not compile
-      //personForm.handleChange('coolness', 'lame') // should not compile
-
-      //personForm.handleChange2('nested', 'data', 20) // should work
-
-      //personForm.handleChange2('nested', 'data', '20') // should not compile
-      //personForm.handleChange2('nested', 'data2', '20') // should not compile
-    })
-
     it('can delete a deep optional property', () => {
 
       type NestedDict = {
@@ -755,6 +714,377 @@ describe('immupdate', () => {
       expect(result).toBe(obj)
     })
 
+
+    // Option support
+
+    // Option<{}>
+
+    it('should be able to update a lone Some({})', () => {
+      const some = Some({ a: 1 })
+
+      const result = deepUpdate(some).set({ a: 10 })
+
+      expect(result).toNotBe(some)
+      expect(result.get()).toEqual({ a: 10 })
+    })
+
+    it('should be able to update a lone None', () => {
+      const none = makeNone<{ a: number }>()
+
+      const result = deepUpdate(none).set({ a: 10 })
+
+      expect(result).toNotBe(none)
+      expect(result.get()).toEqual({ a: 10 })
+    })
+
+    it('should be able to update a top level Some({})', () => {
+      const some = Some({ a: { b: 1 } })
+
+      const result = deepUpdate(some)
+        .abortIfUndef()
+        .at('a')
+        .at('b')
+        .set(10)
+
+      expect(result).toNotBe(some)
+      expect(result.get()).toNotBe(some.get())
+      expect(result.get().a).toNotBe(some.get().a)
+      expect(result.get()).toEqual({ a: { b: 10 } })
+    })
+
+    it('should be able to update a top level None', () => {
+      const none = makeNone<{ a: { b: number } }>()
+
+      const result = deepUpdate(none)
+        .abortIfUndef()
+        .at('a')
+        .at('b')
+        .set(10)
+
+      expect(result).toBe(None)
+    })
+
+    it('should be able to update a path containing a Some({}), using abortIfUndef()', () => {
+      const obj = {
+        a: Some({
+          b: { c: 1 },
+          z: {}
+        })
+      }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .abortIfUndef()
+        .at('b')
+        .at('c')
+        .set(10)
+
+      expect(result).toNotBe(obj)
+      expect(result.a).toNotBe(obj.a)
+      expect(result.a.get().b).toNotBe(obj.a.get().b)
+      expect(result.a.get().z).toBe(obj.a.get().z)
+      expect(result.a.get()).toEqual({
+        b: { c: 10 },
+        z: {}
+      })
+    })
+
+    it('should be able to update a path containing a Some({}), using withDefault()', () => {
+      const obj = {
+        a: Some({
+          b: { c: 1 },
+          x: { y: 'y' }
+        })
+      }
+
+      const defaultValue = { b: { c: 3 }, x: { y: 'defaultY' } }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .withDefault(defaultValue) 
+        .at('b')
+        .at('c')
+        .set(10)
+
+      expect(result).toNotBe(obj)
+      expect(result.a).toNotBe(obj.a)
+      expect(result.a).toNotBe(defaultValue)
+      expect(result.a.get().b).toNotBe(obj.a.get().b)
+      expect(result.a.get()).toEqual({
+        b: { c: 10 },
+        x: { y: 'defaultY' }
+      })
+    })
+
+    it('should be able to update a path containing a None, using abortIfUndef()', () => {
+      const none = makeNone<{
+        b: { c: number },
+        z: {}
+      }>()
+
+      const obj = {
+        a: none
+      }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .abortIfUndef()
+        .at('b')
+        .at('c')
+        .set(10)
+
+      expect(result).toBe(obj) // Noop
+      expect(result.a).toBe(None)
+    })
+
+    it('should be able to update a path containing a None, using withDefault()', () => {
+      const none = makeNone<{
+        b: { c: number },
+        z: {}
+      }>()
+
+      const obj = {
+        a: none
+      }
+
+      const defaultValue = {
+        b: { c: 1 },
+        z: {}
+      }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .withDefault(defaultValue)
+        .at('b')
+        .at('c')
+        .set(10)
+
+      expect(result).toNotBe(obj)
+      expect(result.a.get()).toEqual({ b: { c: 10 }, z: {} })
+      expect(result.a.get()!.z).toBe(defaultValue.z)
+      expect(defaultValue.b.c).toBe(1) // defaultValue was not mutated
+    })
+
+    it('should be able to update a path ending with a Some({})', () => {
+      const obj = {
+        a: Some({ b: 1 })
+      }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .set({ b: 10 })
+
+      expect(result).toNotBe(obj)
+      expect(result.a).toNotBe(obj.a)
+      expect(result.a.get()).toEqual({ b: 10 })
+    })
+
+    it('should be able to update a path ending with a None, using the proper value', () => {
+      const none = makeNone<{ b: number }>()
+
+      const obj = {
+        a: none
+      }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .set({ b: 10 })
+
+      expect(result).toNotBe(obj)
+      expect(result.a.get()).toEqual({ b: 10 })
+    })
+
+    it('should be able to update a path ending with a None, using undefined', () => {
+      const none = makeNone<{ b: number }>()
+
+      const obj = {
+        a: none
+      }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .set(undefined)
+
+      expect(result).toNotBe(obj)
+      expect(result.a).toEqual(None)
+    })
+
+    it('should be able to update a path containing two consecutive Some()', () => {
+      const obj = {
+        a: Some({
+          b: Some({ c: 1 }),
+          x: { y: 'y' }
+        })
+      }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .abortIfUndef()
+        .at('b')
+        .abortIfUndef()
+        .at('c')
+        .set(10)
+
+      expect(result).toNotBe(obj)
+      expect(result.a).toNotBe(obj.a)
+      expect(result.a.get().b).toNotBe(obj.a.get().b)
+      expect(result.a.flatMap(a => a.b).get()).toEqual({ c: 10 })
+      expect(result.a.get().x).toBe(obj.a.get().x)
+    })
+
+    it('should be able to update a path containing a Some then a None', () => {
+      const obj = {
+        a: Some({
+          b: makeNone<{ c: number }>(),
+          x: { y: 'y' }
+        })
+      }
+
+      const defaultValue = { c: 100 }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .abortIfUndef()
+        .at('b')
+        .withDefault(defaultValue)
+        .at('c')
+        .set(10)
+
+      expect(result).toNotBe(obj)
+      expect(result.a).toNotBe(obj.a)
+      expect(result.a.get().b).toNotBe(obj.a.get().b)
+      expect(result.a.flatMap(a => a.b).get()).toEqual({ c: 10 })
+      expect(result.a.get().x).toBe(obj.a.get().x) // This path was left untouched
+    })
+
+    it('should be able to update a path containing a None then a Some', () => {
+      const obj = {
+        a: makeNone<{ b: Option<{c : number}> }>()
+      }
+
+      const defaultA = { b: Some({ c: 10 }) }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .withDefault(defaultA)
+        .at('b')
+        .abortIfUndef()
+        .at('c')
+        .set(100)
+
+      expect(result).toNotBe(obj)
+      expect(result.a).toNotBe(obj.a)
+      expect(result.a.get()!.b.get()).toEqual({ c: 100 })
+    })
+
+    it('should be able to delete a Some({}) property', () => {
+      const obj = {
+        a: Some({ b: 10, c: 10 as number | undefined })
+      }
+
+      const result = deepUpdate(obj).at('a').abortIfUndef().at('c').set(DELETE)
+
+      expect(result).toNotBe(obj)
+      expect(result.a).toNotBe(obj.a)
+      expect(result.a.get()).toEqual({ b: 10 })
+    })
+
+    it('should be able to delete a None({}) property', () => {
+      const obj = {
+        a: makeNone<{ b: number, c: number | undefined }>()
+      }
+
+      const result = deepUpdate(obj).at('a').abortIfUndef().at('c').set(DELETE)
+
+      expect(result).toBe(obj)
+      expect(result.a).toBe(None)
+    })
+
+    // Option<[]>
+
+    it('should be able to update a path containing a Some(number[])', () => {
+      const obj = {
+        a: Some([1, 2, 3])
+      }
+
+      const result = deepUpdate(obj).at('a').abortIfUndef().at(3).set(4)
+
+      expect(result).toNotBe(obj)
+      expect(result.a.get()).toEqual([1, 2, 3, 4])
+    })
+
+    it('should be able to update a path containing a None(number[])', () => {
+      const obj = {
+        a: makeNone<number[]>()
+      }
+
+      const defaultValue = [1, 2, 3]
+
+      const result = deepUpdate(obj).at('a').withDefault(defaultValue).at(3).set(4)
+
+      expect(result).toNotBe(obj)
+      expect(result.a.get()).toEqual([1, 2, 3, 4])
+      expect(result.a.get()).toNotBe(defaultValue) // the default value was not mutated in place.
+    })
+
+    it('should be able to update a path containing a Some(Array<{}>)', () => {
+      const obj = {
+        a: Some([
+          { name: 'John' },
+          { name: 'Roberto' }
+        ])
+      }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .abortIfUndef()
+        .at(1)
+        .abortIfUndef()
+        .at('name')
+        .set('Roberta')
+
+      expect(result).toNotBe(obj)
+      expect(result.a.get()).toEqual([
+        { name: 'John' },
+        { name: 'Roberta' }
+      ])
+    })
+
+    // Option<primitive>
+
+    it('should be able to update a path containing a Some(primitive)', () => {
+      const obj = {
+        a: Some(1)
+      }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .set(10)
+
+      expect(result).toNotBe(obj)
+      expect(result.a).toNotBe(obj.a)
+      expect(result.a.get()).toBe(10)
+    })
+
+    it('should be able to update a path containing a None(primitive)', () => {
+      const obj = {
+        a: makeNone<number>()
+      }
+
+      const result = deepUpdate(obj)
+        .at('a')
+        .set(10)
+
+      expect(result).toNotBe(obj)
+      expect(result.a).toNotBe(obj.a)
+      expect(result.a.get()).toBe(10)
+    })
+
   })
 
 })
+
+
+function makeNone<T>() {
+  return Option<T>(null)
+}

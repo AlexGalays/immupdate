@@ -12,7 +12,8 @@
     "typescript": "3.1.1",
     "mocha": "2.2.5",
     "expect": "1.8.0",
-    "chalk": "1.1.1"
+    "chalk": "1.1.1",
+    "space-lift": "0.8.2"
   },
 
   "scripts": {

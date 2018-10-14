@@ -6,7 +6,7 @@
 
 /** Performs a shallow update of an object using a partial object of the same shape. A new object is returned. */
 export function update<Obj extends {}, K extends keyof Obj>(host: Obj, spec: Pick<Obj, K>): Obj {
-  const result = clone(host)
+  const result = cloneObject(host)
   let hasChanged = false;
 
   for (let key in spec) {
@@ -35,29 +35,30 @@ export const DELETE = {} as any as undefined
 //  Deep update
 //--------------------------------------
 
-
 export type Leaf = string | number | boolean | null | symbol | Date | Function
 
+export type OptionContent<Opt extends OptionLike<any>> = Exclude<ReturnType<Opt['get']>, undefined>
 
 export type Updater<TARGET, CURRENT> =
+  [CURRENT] extends [OptionLike<any>] ? ObjectUpdater<TARGET, OptionContent<CURRENT> | undefined> :
   [CURRENT] extends [any[]] ? ArrayUpdater<TARGET, CURRENT> :
-  [CURRENT] extends [Leaf] ? AnySetter<TARGET, CURRENT> : ObjectUpdater<TARGET, CURRENT>
+  [CURRENT] extends [Leaf] ? AnySetter<TARGET, CURRENT> :
+  ObjectUpdater<TARGET, CURRENT>
 
 
-export interface ArrayAtUpdater<TARGET, CURRENT> {
+export interface ArrayUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURRENT> {
   /**
    * Selects an Array index for update or further at() chaining
    */
   at(index: number): Updater<TARGET, [CURRENT] extends [any[]] ? CURRENT[number & keyof CURRENT] | undefined : never>
 }
 
-export interface ObjectAtUpdater<TARGET, CURRENT> {
+export interface ObjectUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURRENT> {
   /**
    * Selects this Object key for update or further at() chaining
    */
   at<K extends keyof CURRENT>(key: K): Updater<TARGET, CURRENT[K]>
 }
-
 
 export interface AnySetter<TARGET, CURRENT> {
   /**
@@ -93,14 +94,10 @@ export interface AnyUpdater<TARGET, CURRENT> extends AnySetter<TARGET, CURRENT> 
   abortIfNot(predicate: (value: CURRENT) => boolean): Updater<TARGET, CURRENT>
 }
 
-export interface ArrayUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURRENT>, ArrayAtUpdater<TARGET, CURRENT> {}
-export interface ObjectUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURRENT>, ObjectAtUpdater<TARGET, CURRENT> {}
-
-
 
 interface Root {
   type: 'root'
-  boundTarget: {} | undefined
+  target: any
 }
 
 interface At {
@@ -121,8 +118,11 @@ interface AbortIfNot {
   parent: any
 }
 
-type UpdaterData = Root | At | WithDefault | AbortIfNot
+type CloneResult =
+  { name: 'aborted' } |
+  { name: 'result', clonedTarget: any, leafHost: any, field: any, structurallyModified: boolean }
 
+type UpdaterData = Root | At | WithDefault | AbortIfNot
 
 
 class _Updater {
@@ -137,35 +137,56 @@ class _Updater {
   }
 
   modify<V>(modifier: (value: V) => V) {
-    const doModify = (target: any) => {
+    const target = this.findTarget()
+    const result = this.cloneForUpdate(target)
 
-      const result = this.cloneForUpdate(target)
-      if (result.name === 'aborted') return target
+    if (result.name === 'aborted') return target
 
-      const { clonedTarget, leafHost, field, structurallyModified } = result
+    const { clonedTarget, leafHost, field, structurallyModified } = result
 
-      const currentValue = leafHost[field]
-      const value = modifier(currentValue)
+    const leafHostIsOption = isOptionLike(leafHost)
+    const currentValue = leafHostIsOption ? leafHost.get() : leafHost[field]
+    const value = modifier(currentValue)
 
-      let changed = structurallyModified
+    // Actually shallow update, e.g deepUpdate(obj).set(otherObj)
+    // Not much point but the typings make it possible ¯\_(ツ)_/¯
+    if (field === '')
+      return leafHostIsOption
+        ? leafHost.Option(value)
+        : value
 
-      if (value === DELETE) {
-        if (field in leafHost) changed = true
-        delete leafHost[field]
+    let modified = structurallyModified
+
+    if (value === DELETE) {
+      
+      if (leafHostIsOption) {
+        if (field in leafHost.value) modified = true
+        delete leafHost.value[field]
       }
       else {
-        if (currentValue !== value) changed = true
-        leafHost[field] = value
-      }
+        if (field in leafHost) modified = true
+        delete leafHost[field]
+      } 
+    }
+    else {
+      if (currentValue !== value)
+      modified = true
 
-      return changed ? clonedTarget : target
+      if (leafHostIsOption) {
+        leafHost.value[field] = value
+      }
+      else {
+        // Setting a T | undefined as the value of an Option
+        // should actually build a new Option<T>
+        const finalValue = isOptionLike(currentValue)
+          ? (currentValue as any).Option(value)
+          : value
+
+        leafHost[field] = finalValue
+      }
     }
 
-    const boundTarget = this.findBoundTarget()
-
-    return boundTarget
-      ? doModify(boundTarget)
-      : doModify
+    return modified ? clonedTarget : target
   }
 
   withDefault(value: any): any {
@@ -177,13 +198,16 @@ class _Updater {
   }
 
   abortIfUndef(): any {
-    return this.abortIfNot((value: any) => value !== undefined)
+    return this.abortIfNot((value: any) => {
+      if (isOptionLike(value)) return value.type === 'some'
+      return value !== undefined
+    })
   }
 
-  findBoundTarget() {
+  findTarget() {
     let current = this
     while (true) {
-      if (current.data.type === 'root') return current.data.boundTarget
+      if (current.data.type === 'root') return current.data.target
       current = current.data.parent
     }
   }
@@ -202,24 +226,57 @@ class _Updater {
   }
 
   getNextValue(previousHost: any, host: any, field: string | number, isLast: boolean): any {
+    const hostIsOption = isOptionLike(host)
+    const previousHostIsOption = isOptionLike(previousHost)
 
     if (this.data.type === 'at') {
       const newField = this.data.field
-      const value = host[newField]
-      const nextValue = isObjectOrArray(value) ? clone(value) : value
-      const newHost = isLast ? host : nextValue
-      host[this.data.field] = nextValue
-      return { host: newHost, field: newField }
+
+      if (hostIsOption) {
+        if (host.type === 'none')
+          return { host: undefined, field: newField }
+
+        host.value = clone(host.value)
+
+        const value = host.value[newField]
+        const nextValue = clone(value)
+        const newHost = isLast ? host : nextValue
+
+        host.value[this.data.field] = nextValue
+
+        return { host: newHost, field: newField }
+      }
+      else {
+        if (!host) return { host: undefined, field: newField }
+
+        const value = host[newField]
+        const nextValue = clone(value)
+        const newHost = isLast ? host : nextValue
+
+        host[this.data.field] = nextValue
+
+        return { host: newHost, field: newField }
+      }
     }
 
     if (this.data.type === 'abortIfNot' && this.data.predicate(host) === false) {
       return { host, field, aborted: true }
     }
 
-    if (this.data.type === 'withDefault' && previousHost[field] === undefined) {
-      const nextValue = this.data.defaultValue
-      const newHost = isLast ? previousHost : nextValue
-      previousHost[field] = nextValue
+    if (this.data.type === 'withDefault' && (previousHost[field] === undefined || isOptionLike(previousHost[field]))) {
+      const nextValue = isOptionLike(host)
+        ? host.Option(this.data.defaultValue)
+        : this.data.defaultValue
+
+      const newHost = isLast
+        ? previousHost
+        : nextValue
+
+      if (previousHostIsOption)
+        previousHost.value[field] = nextValue
+      else
+        previousHost[field] = nextValue
+
       return { host: newHost, field, structurallyModified: true }
     }
 
@@ -227,9 +284,9 @@ class _Updater {
     return { host: newHost, field }
   }
 
-  cloneForUpdate(target: any): { name: 'aborted' } | { name: 'result', clonedTarget: any, leafHost: any, field: any, structurallyModified: boolean } {
+  cloneForUpdate(target: any): CloneResult {
     const updaters = this.parentUpdaters()
-    const obj = clone(target)
+    const obj = cloneContainer(target)
 
     let previousHost = obj
     let host = obj
@@ -264,21 +321,44 @@ class _Updater {
   }
 }
 
-function isObjectOrArray(obj: any): boolean {
+// TODO: This probably won't fly with some weird edge cases like deepUpdate(new Date()).set(), etc
+// For completion sake, we should probably fix it.
+function isContainer(obj: any): boolean {
   return obj !== null && typeof obj === 'object'
 }
 
-function clone(obj: any): any {
-  if (Array.isArray(obj)) return obj.slice()
+function clone(obj: any) {
+  return isContainer(obj) ? cloneContainer(obj) : obj
+}
 
+function cloneContainer(obj: any): any {
+  if (Array.isArray(obj)) return obj.slice()
+  if (isOptionLike(obj)) return obj.map(identity)
+  return cloneObject(obj)
+}
+
+function cloneObject(obj: any): any {
   const cloned = {}
   Object.keys(obj).forEach(key => { (cloned as any)[key] = (obj as any)[key] })
   return cloned
 }
 
-export function deepUpdate<TARGET extends any[]>(target: TARGET): ArrayAtUpdater<TARGET, TARGET>
-export function deepUpdate<TARGET extends object>(target: TARGET): ObjectAtUpdater<TARGET, TARGET>
+function identity(x: any) {
+  return x
+}
 
-export function deepUpdate(target?: any): any {
-  return new _Updater({ type: 'root', boundTarget: target })
+/**
+ * Meant to match space-lift/option, but without requiring a hard (cyclic) dependency.
+ */
+interface OptionLike<A> {
+  get(): A | undefined
+  map<B>(fn: (a: A) => B | null | undefined): OptionLike<B>
+}
+
+function isOptionLike(obj: any) {
+  return !!obj && (obj.type === 'some' || obj.type === 'none') && obj.Option
+}
+
+export function deepUpdate<TARGET>(target: TARGET): Updater<TARGET, TARGET> {
+  return new _Updater({ type: 'root', target }) as any as Updater<TARGET, TARGET>
 }

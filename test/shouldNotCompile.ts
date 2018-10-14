@@ -76,9 +76,6 @@ update({ a: 33 }, { [daIndex]: 'lol' })
 // Updating a primitive @shouldNotCompile
 deepUpdate<number>()
 
-// Trying to update the root @shouldNotCompile
-deepUpdate<{}>().set({})({})
-
 // Chaining a nested primitive @shouldNotCompile
 deepUpdate<{ kiki: { koko: number } }>()
   .at('kiki')
@@ -135,3 +132,20 @@ type Prim = string | undefined
 deepUpdate({ a: 'aa' } as { a: Prim })
   .at('a')
   .modify(x => x.substr(0))
+
+
+// Trying to access an Option's value without a null check @shouldNotCompile
+const opt = Option({ a: { b: 1 } })
+deepUpdate(opt).at('a').at('b').set(10)
+
+// Trying to access an Option<Object>'s content as if it was an Array @shouldNotCompile
+deepUpdate({ a: Option({ b: 1 }) }).at('a').at(0)
+
+// Trying to access an Option<Array>'s content as if it was an Object @shouldNotCompile
+deepUpdate({ a: Option([1, 2, 3]) }).at('a').at('hey')
+
+// Trying to access an Option<Array>'s item as if it was always defined @shouldNotCompile
+deepUpdate({ a: Option([{ name: 'John' }]) }).at('a').abortIfUndef().at(0).at('name')
+
+// Trying to access an Option<primitive>'s content as if it was an Object @shouldNotCompile
+deepUpdate({ a: Option(10) }).at('a').at('hey')
