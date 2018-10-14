@@ -134,6 +134,24 @@ describe('immupdate', () => {
       expect(defaultValue.c).toBe('defaultC')
     })
 
+    it('can update an object typed as a dictionary', () => {
+      type PeopleById = Record<string, { name: string } | undefined>
+
+      const obj = {
+        people: { '001': { name: 'Roberto' } } as PeopleById
+      }
+
+      const result = deepUpdate(obj)
+        .at('people')
+        .at('001')
+        .abortIfUndef()
+        .at('name')
+        .set('Roberta')
+
+      expect(result.people['001']).toNotBe(obj.people['001'])
+      expect(result.people).toEqual({ '001': { name: 'Roberta' } })
+    })
+
     it('can update a root Array', () => {
       // regular notation
       const result = deepUpdate([person, person, person])
