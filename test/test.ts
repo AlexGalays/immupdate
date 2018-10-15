@@ -754,7 +754,7 @@ describe('immupdate', () => {
 
     // Option<{}>
 
-    it('should be able to update a lone Some({})', () => {
+    it('can update a lone Some({})', () => {
       const some = Some({ a: 1 })
 
       const result = deepUpdate(some).set({ a: 10 })
@@ -763,7 +763,7 @@ describe('immupdate', () => {
       expect(result.get()).toEqual({ a: 10 })
     })
 
-    it('should be able to update a lone None', () => {
+    it('can update a lone None', () => {
       const none = makeNone<{ a: number }>()
 
       const result = deepUpdate(none).set({ a: 10 })
@@ -772,7 +772,7 @@ describe('immupdate', () => {
       expect(result.get()).toEqual({ a: 10 })
     })
 
-    it('should be able to update a top level Some({})', () => {
+    it('can update a top level Some({})', () => {
       const some = Some({ a: { b: 1 } })
 
       const result = deepUpdate(some)
@@ -787,7 +787,7 @@ describe('immupdate', () => {
       expect(result.get()).toEqual({ a: { b: 10 } })
     })
 
-    it('should be able to update a top level None', () => {
+    it('can update a top level None', () => {
       const none = makeNone<{ a: { b: number } }>()
 
       const result = deepUpdate(none)
@@ -799,7 +799,7 @@ describe('immupdate', () => {
       expect(result).toBe(None)
     })
 
-    it('should be able to update a path containing a Some({}), using abortIfUndef()', () => {
+    it('can update a path containing a Some({}), using abortIfUndef()', () => {
       const obj = {
         a: Some({
           b: { c: 1 },
@@ -824,7 +824,7 @@ describe('immupdate', () => {
       })
     })
 
-    it('should be able to update a path containing a Some({}), using withDefault()', () => {
+    it('can update a path containing a Some({}), using withDefault()', () => {
       const obj = {
         a: Some({
           b: { c: 1 },
@@ -851,7 +851,7 @@ describe('immupdate', () => {
       })
     })
 
-    it('should be able to update a path containing a None, using abortIfUndef()', () => {
+    it('can update a path containing a None, using abortIfUndef()', () => {
       const none = makeNone<{
         b: { c: number },
         z: {}
@@ -872,7 +872,7 @@ describe('immupdate', () => {
       expect(result.a).toBe(None)
     })
 
-    it('should be able to update a path containing a None, using withDefault()', () => {
+    it('can update a path containing a None, using withDefault()', () => {
       const none = makeNone<{
         b: { c: number },
         z: {}
@@ -900,7 +900,7 @@ describe('immupdate', () => {
       expect(defaultValue.b.c).toBe(1) // defaultValue was not mutated
     })
 
-    it('should be able to update a path ending with a Some({})', () => {
+    it('can update a path ending with a Some({})', () => {
       const obj = {
         a: Some({ b: 1 })
       }
@@ -914,7 +914,7 @@ describe('immupdate', () => {
       expect(result.a.get()).toEqual({ b: 10 })
     })
 
-    it('should be able to update a path ending with a None, using the proper value', () => {
+    it('can update a path ending with a None, using the proper value', () => {
       const none = makeNone<{ b: number }>()
 
       const obj = {
@@ -929,7 +929,7 @@ describe('immupdate', () => {
       expect(result.a.get()).toEqual({ b: 10 })
     })
 
-    it('should be able to update a path ending with a None, using undefined', () => {
+    it('can update a path ending with a None, using undefined', () => {
       const none = makeNone<{ b: number }>()
 
       const obj = {
@@ -944,7 +944,7 @@ describe('immupdate', () => {
       expect(result.a).toEqual(None)
     })
 
-    it('should be able to update a path containing two consecutive Some()', () => {
+    it('can update a path containing two consecutive Some()', () => {
       const obj = {
         a: Some({
           b: Some({ c: 1 }),
@@ -967,7 +967,7 @@ describe('immupdate', () => {
       expect(result.a.get().x).toBe(obj.a.get().x)
     })
 
-    it('should be able to update a path containing a Some then a None', () => {
+    it('can update a path containing a Some then a None', () => {
       const obj = {
         a: Some({
           b: makeNone<{ c: number }>(),
@@ -992,7 +992,7 @@ describe('immupdate', () => {
       expect(result.a.get().x).toBe(obj.a.get().x) // This path was left untouched
     })
 
-    it('should be able to update a path containing a None then a Some', () => {
+    it('can update a path containing a None then a Some', () => {
       const obj = {
         a: makeNone<{ b: Option<{c : number}> }>()
       }
@@ -1012,7 +1012,7 @@ describe('immupdate', () => {
       expect(result.a.get()!.b.get()).toEqual({ c: 100 })
     })
 
-    it('should be able to delete a Some({}) property', () => {
+    it('can delete a Some({}) property', () => {
       const obj = {
         a: Some({ b: 10, c: 10 as number | undefined })
       }
@@ -1024,7 +1024,7 @@ describe('immupdate', () => {
       expect(result.a.get()).toEqual({ b: 10 })
     })
 
-    it('should be able to delete a None({}) property', () => {
+    it('can delete a None({}) property', () => {
       const obj = {
         a: makeNone<{ b: number, c: number | undefined }>()
       }
@@ -1037,7 +1037,7 @@ describe('immupdate', () => {
 
     // Option<[]>
 
-    it('should be able to update a path containing a Some(number[])', () => {
+    it('can update a path containing a Some(number[])', () => {
       const obj = {
         a: Some([1, 2, 3])
       }
@@ -1048,7 +1048,7 @@ describe('immupdate', () => {
       expect(result.a.get()).toEqual([1, 2, 3, 4])
     })
 
-    it('should be able to update a path containing a None(number[])', () => {
+    it('can update a path containing a None(number[])', () => {
       const obj = {
         a: makeNone<number[]>()
       }
@@ -1062,7 +1062,7 @@ describe('immupdate', () => {
       expect(result.a.get()).toNotBe(defaultValue) // the default value was not mutated in place.
     })
 
-    it('should be able to update a path containing a Some(Array<{}>)', () => {
+    it('can update a path containing a Some(Array<{}>)', () => {
       const obj = {
         a: Some([
           { name: 'John' },
@@ -1087,7 +1087,7 @@ describe('immupdate', () => {
 
     // Option<primitive>
 
-    it('should be able to update a path containing a Some(primitive)', () => {
+    it('can update a path containing a Some(primitive)', () => {
       const obj = {
         a: Some(1)
       }
@@ -1101,7 +1101,7 @@ describe('immupdate', () => {
       expect(result.a.get()).toBe(10)
     })
 
-    it('should be able to update a path containing a None(primitive)', () => {
+    it('can update a path containing a None(primitive)', () => {
       const obj = {
         a: makeNone<number>()
       }
