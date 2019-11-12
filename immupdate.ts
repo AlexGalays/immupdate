@@ -158,8 +158,13 @@ class _Updater {
     let modified = structurallyModified
 
     if (value === DELETE) {
-      
-      if (leafHostIsOption) {
+
+      if (Array.isArray(leafHost) && typeof field === 'number') {
+        if (field >= leafHost.length) return target
+        modified = true
+        leafHost.splice(field, 1)
+      }
+      else if (leafHostIsOption) {
         if (field in leafHost.value) modified = true
         delete leafHost.value[field]
       }
@@ -253,7 +258,7 @@ class _Updater {
         const nextValue = clone(value)
         const newHost = isLast ? host : nextValue
 
-        host[this.data.field] = nextValue
+        if (nextValue !== undefined) host[this.data.field] = nextValue
 
         return { host: newHost, field: newField }
       }

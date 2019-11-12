@@ -655,6 +655,26 @@ describe('immupdate', () => {
       expect(updated4).toNotBe(obj2)
     })
 
+    it('can delete an element of an array', () => {
+
+      type TestType = {a: number[]}
+      const data: TestType = {a: [1, 2, 3]}
+
+      // test if the element to delete exist
+      const expected1: TestType = {a: [1, 3]}
+      const updated1 = deepUpdate(data).at('a').at(1).set(DELETE)
+      expect(updated1).toEqual(expected1)
+      expect(updated1).toNotBe(data)
+
+      // test if nothing happen when the element to delete is out of array's bound
+      const updated2 = deepUpdate(data).at('a').at(3).set(DELETE)
+      expect(updated2).toEqual(data)
+
+      // test if nothing happen when the element to delete is widely out of array's bound
+      const updated3 = deepUpdate(data).at('a').at(5).set(DELETE)
+      expect(updated3).toEqual(data)
+    })
+
     it('can update an union member with an instance of this union', () => {
 
       type A = { type: 'a', data: number }
