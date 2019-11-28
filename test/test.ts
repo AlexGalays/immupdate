@@ -660,19 +660,31 @@ describe('immupdate', () => {
       type TestType = {a: number[]}
       const data: TestType = {a: [1, 2, 3]}
 
-      // test if the element to delete exist
-      const expected1: TestType = {a: [1, 3]}
-      const updated1 = deepUpdate(data).at('a').at(1).set(DELETE)
+      // test if the element to delete is the first of the array
+      const expected1: TestType = {a: [2, 3]}
+      const updated1 = deepUpdate(data).at('a').at(0).set(DELETE)
       expect(updated1).toEqual(expected1)
       expect(updated1).toNotBe(data)
 
+      // test if the element to delete is in the middle of the array
+      const expected2: TestType = {a: [1, 3]}
+      const updated2 = deepUpdate(data).at('a').at(1).set(DELETE)
+      expect(updated2).toEqual(expected2)
+      expect(updated2).toNotBe(data)
+
+      // test if the element to delete is the last of the array
+      const expected3: TestType = {a: [1, 2]}
+      const updated3 = deepUpdate(data).at('a').at(2).set(DELETE)
+      expect(updated3).toEqual(expected3)
+      expect(updated3).toNotBe(data)
+
       // test if nothing happen when the element to delete is out of array's bound
-      const updated2 = deepUpdate(data).at('a').at(3).set(DELETE)
-      expect(updated2).toEqual(data)
+      const updated4 = deepUpdate(data).at('a').at(3).set(DELETE)
+      expect(updated4).toEqual(data)
 
       // test if nothing happen when the element to delete is widely out of array's bound
-      const updated3 = deepUpdate(data).at('a').at(5).set(DELETE)
-      expect(updated3).toEqual(data)
+      const updated5 = deepUpdate(data).at('a').at(5).set(DELETE)
+      expect(updated5).toEqual(data)
     })
 
     it('can update an union member with an instance of this union', () => {
