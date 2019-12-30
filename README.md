@@ -1,4 +1,4 @@
-![immupdate_logo](http://i171.photobucket.com/albums/u320/boubiyeah/immupdate_logo_zpso5d7ao18.png)
+![immupdate_logo](img/logo.png)
 
 immutable update utils for JS `Object` and `Arrays`.
 
@@ -144,7 +144,7 @@ This is fonctionally equivalent to the code using multiple `update` calls.
 
 
 `person` was only updated where necessary. Below in green are the paths that were updated. This is much more efficient than deep cloning.  
-![update](http://i171.photobucket.com/albums/u320/boubiyeah/Screen%20Shot%202015-04-19%20at%2000.15.12_zps4gvttcxd.png)
+![update](img/updatedPaths.png)
 
 
 
