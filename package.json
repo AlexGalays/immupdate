@@ -9,7 +9,7 @@
   "typings": "commonjs/immupdate.d.ts",
 
   "devDependencies": {
-    "typescript": "3.1.1",
+    "typescript": "3.7.4",
     "mocha": "2.2.5",
     "expect": "1.8.0",
     "chalk": "1.1.1",

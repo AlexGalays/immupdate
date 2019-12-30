@@ -158,9 +158,9 @@ supports-color@~1.2.0:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-1.2.1.tgz#12ee21507086cd98c1058d9ec0f4ac476b7af3b2"
 
-typescript@3.1.1:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.1.1.tgz#3362ba9dd1e482ebb2355b02dfe8bcd19a2c7c96"
+typescript@3.7.4:
+  version "3.7.4"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.4.tgz#1743a5ec5fef6a1fa9f3e4708e33c81c73876c19"
 
 util@0.10.3:
   version "0.10.3"

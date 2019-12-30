@@ -674,15 +674,15 @@ describe('immupdate', () => {
 
       // test if the element to delete is the last of the array
       const expected3: TestType = {a: [1, 2]}
-      const updated3 = deepUpdate(data).at('a').at(2).set(DELETE)
+      const updated3 = deepUpdate(data).at('a').at(2).modify(() => DELETE)
       expect(updated3).toEqual(expected3)
       expect(updated3).toNotBe(data)
 
-      // test if nothing happen when the element to delete is out of array's bound
+      // test whether nothing happens when the element to delete is out of bound
       const updated4 = deepUpdate(data).at('a').at(3).set(DELETE)
       expect(updated4).toEqual(data)
 
-      // test if nothing happen when the element to delete is widely out of array's bound
+      // test whether nothing happens when the element to delete is out of bounds
       const updated5 = deepUpdate(data).at('a').at(5).set(DELETE)
       expect(updated5).toEqual(data)
     })
