@@ -24,6 +24,15 @@ This library only does simple updates (e.g setting, modifying or deleting a valu
 immupdate updates the paths that truly changed and only at update time, not defensively everytime an object is handed out in fear it might be mutated in place.
 * If everything gets a new reference, we can't know what changed between two operations.  
 
+# Why not use Object spreads
+* First, it's terrible for nested updates.
+* it's also pretty bad for shallow updates as it doesn't have the strict semantic of an update operation but rather, the semantic of more generally extending the base object. So while it is technically possible to use it, it's a bad idea and is very unsafe, especially during refactorings. The very least you should expect from a type system is to be able to catch typos.
+Example:
+```ts
+const john = {name: 'john', address: '17, claproast st'};
+const updatedJohn = {...john, adress: '18, claproast st'}; // oh no
+```
+
 # Why Object/Array instead of immutable data structures
 
 Pros:
