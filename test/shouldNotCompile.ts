@@ -149,3 +149,15 @@ deepUpdate({ a: Option([{ name: 'John' }]) }).at('a').abortIfUndef().at(0).at('n
 
 // Trying to access an Option<primitive>'s content as if it was an Object @shouldNotCompile
 deepUpdate({ a: Option(10) }).at('a').at('hey')
+
+// deleting a non nullable key with deepUpdate and DELETE @shouldNotCompile
+deepUpdate({ a: 33 }).at('a').set(DELETE);
+
+// deleting a non nullable key with deepUpdate @shouldNotCompile
+deepUpdate({ a: 33 }).at('a').delete();
+
+// deleting a non nullable Array key with deepUpdate @shouldNotCompile
+deepUpdate({ a: [] }).at('a').delete();
+
+// deleting a non nullable nested key with deepUpdate @shouldNotCompile
+deepUpdate({ a: {b: 33} }).at('a').at('b').delete();

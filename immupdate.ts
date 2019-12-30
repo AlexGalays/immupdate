@@ -45,7 +45,6 @@ export type Updater<TARGET, CURRENT> =
   [CURRENT] extends [Leaf] ? AnySetter<TARGET, CURRENT> :
   ObjectUpdater<TARGET, CURRENT>
 
-
 export interface ArrayUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURRENT> {
   /**
    * Selects an Array index for update or further at() chaining
@@ -53,12 +52,12 @@ export interface ArrayUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURREN
   at(index: number): Updater<TARGET, [CURRENT] extends [any[]] ? CURRENT[number & keyof CURRENT] | undefined : never>
 }
 
-export interface ObjectUpdater<TARGET, CURRENT> extends AnyUpdater<TARGET, CURRENT> {
+export type ObjectUpdater<TARGET, CURRENT> = {
   /**
    * Selects this Object key for update or further at() chaining
    */
   at<K extends keyof CURRENT>(key: K): Updater<TARGET, CURRENT[K]>
-}
+} & AnyUpdater<TARGET, CURRENT> & (undefined extends CURRENT ? AnyDeleter<TARGET> : {});
 
 export interface AnySetter<TARGET, CURRENT> {
   /**
@@ -70,6 +69,13 @@ export interface AnySetter<TARGET, CURRENT> {
    * Modifies the value at the specified path. The current value is passed.
    */
   modify(modifier: (value: CURRENT) => CURRENT): TARGET
+}
+
+export interface AnyDeleter<TARGET> {
+  /**
+   * Deletes the key or index at the specified path.
+   */
+  delete(): TARGET;
 }
 
 export interface AnyUpdater<TARGET, CURRENT> extends AnySetter<TARGET, CURRENT> {
@@ -134,6 +140,10 @@ class _Updater {
 
   set(value: any) {
     return this.modify(_ => value)
+  }
+
+  delete() {
+    return this.modify(_ => DELETE as any);
   }
 
   modify<V>(modifier: (value: V) => V) {

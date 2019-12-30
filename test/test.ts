@@ -598,7 +598,7 @@ describe('immupdate', () => {
         .at('a')
         .at('b')
         .at('d')
-        .set(DELETE)
+        .delete();
 
       const updated2 = deepUpdate(nestedDict)
         .at('a')
@@ -668,7 +668,7 @@ describe('immupdate', () => {
 
       // test if the element to delete is in the middle of the array
       const expected2: TestType = {a: [1, 3]}
-      const updated2 = deepUpdate(data).at('a').at(1).set(DELETE)
+      const updated2 = deepUpdate(data).at('a').at(1).delete();
       expect(updated2).toEqual(expected2)
       expect(updated2).toNotBe(data)
 
