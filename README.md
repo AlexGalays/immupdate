@@ -1,3 +1,5 @@
+Note: The landscape changed a bit. Unless you're hunting for bytes, perhaps prefer to use `immer` (5.4kb vs immupdate's 1.2kb) which also make it easier to update several properties at once.
+
 ![immupdate_logo](img/logo.png)
 
 immutable update utils for JS `Object` and `Arrays`.
